@@ -9,6 +9,13 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiParam,
+} from '@nestjs/swagger';
 import { JwtAuthGuard } from '../../../../common/infrastructure/http/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../../common/infrastructure/http/guards/roles.guard';
 import { Roles } from '../../../../common/infrastructure/http/decorators/roles.decorator';
@@ -31,6 +38,8 @@ import { CreateMaterialCategoryUseCase } from '../../application/use-cases/creat
 import { SetStudentMaterialAccessDto } from '../../application/dto/set-student-material-access.dto';
 import { SetStudentMaterialAccessUseCase } from '../../application/use-cases/set-student-material-access.use-case';
 
+@ApiTags('Materials')
+@ApiBearerAuth('access-token')
 @Controller({ path: 'materials', version: '1' })
 @UseGuards(JwtAuthGuard)
 export class MaterialsController {
@@ -44,6 +53,8 @@ export class MaterialsController {
     private readonly setStudentMaterialAccessUseCase: SetStudentMaterialAccessUseCase,
   ) {}
 
+  @ApiOperation({ summary: 'List materials (filtered by role)' })
+  @ApiResponse({ status: 200, type: [MaterialResponseDto] })
   @Get()
   async list(@CurrentUser() user: JwtPayload): Promise<MaterialResponseDto[]> {
     return this.listMaterialsUseCase.execute({
@@ -52,11 +63,15 @@ export class MaterialsController {
     });
   }
 
+  @ApiOperation({ summary: 'List material categories' })
+  @ApiResponse({ status: 200, type: [MaterialCategoryResponseDto] })
   @Get('categories')
   async categories(): Promise<MaterialCategoryResponseDto[]> {
     return this.listMaterialCategoriesUseCase.execute();
   }
 
+  @ApiOperation({ summary: 'Create a new material (Admin only)' })
+  @ApiResponse({ status: 201, type: MaterialResponseDto })
   @Post()
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -67,6 +82,8 @@ export class MaterialsController {
     return this.createMaterialUseCase.execute(body, user.sub);
   }
 
+  @ApiOperation({ summary: 'Create a material category (Admin only)' })
+  @ApiResponse({ status: 201, type: MaterialCategoryResponseDto })
   @Post('categories')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -76,6 +93,9 @@ export class MaterialsController {
     return this.createMaterialCategoryUseCase.execute(body);
   }
 
+  @ApiOperation({ summary: 'Update a material (Admin only)' })
+  @ApiParam({ name: 'id', description: 'Material ID' })
+  @ApiResponse({ status: 200, type: MaterialResponseDto })
   @Patch(':id')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -86,6 +106,10 @@ export class MaterialsController {
     return this.updateMaterialUseCase.execute(id, body);
   }
 
+  @ApiOperation({ summary: 'Set student access to a material (Admin only)' })
+  @ApiParam({ name: 'id', description: 'Material ID' })
+  @ApiParam({ name: 'studentId', description: 'Student user ID' })
+  @ApiResponse({ status: 204 })
   @Patch(':id/access/:studentId')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -104,6 +128,9 @@ export class MaterialsController {
     });
   }
 
+  @ApiOperation({ summary: 'Delete a material (Admin only)' })
+  @ApiParam({ name: 'id', description: 'Material ID' })
+  @ApiResponse({ status: 204 })
   @Delete(':id')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)

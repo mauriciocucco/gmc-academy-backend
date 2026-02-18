@@ -117,6 +117,14 @@ Admin:
 - `GET /admin/stats`
 - `GET /admin/performance`
 
+## Documentacion API
+
+Swagger UI disponible en:
+
+- `http://localhost:3000/api/docs`
+
+Incluye todos los endpoints con schemas de request/response y soporte para autenticacion Bearer JWT.
+
 ## Notas tecnicas
 
 - Prefijo global: `/api`

@@ -1,4 +1,10 @@
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { LoginUseCase } from '../../application/use-cases/login.use-case';
 import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
 import { LogoutUseCase } from '../../application/use-cases/logout.use-case';
@@ -9,6 +15,7 @@ import { JwtAuthGuard } from '../../../../common/infrastructure/http/guards/jwt-
 import { CurrentUser } from '../../../../common/infrastructure/http/decorators/current-user.decorator';
 import { JwtPayload } from '../../../../common/infrastructure/http/interfaces/jwt-payload.interface';
 
+@ApiTags('Auth')
 @Controller({ path: 'auth', version: '1' })
 export class AuthController {
   constructor(
@@ -17,18 +24,25 @@ export class AuthController {
     private readonly logoutUseCase: LogoutUseCase,
   ) {}
 
+  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiResponse({ status: 200, type: AuthSessionDto })
   @Post('login')
   @HttpCode(200)
   async login(@Body() body: LoginDto): Promise<AuthSessionDto> {
     return this.loginUseCase.execute(body);
   }
 
+  @ApiOperation({ summary: 'Refresh access token using refresh token' })
+  @ApiResponse({ status: 200, type: AuthSessionDto })
   @Post('refresh')
   @HttpCode(200)
   async refresh(@Body() body: RefreshTokenDto): Promise<AuthSessionDto> {
     return this.refreshSessionUseCase.execute(body);
   }
 
+  @ApiBearerAuth('access-token')
+  @ApiOperation({ summary: 'Logout current session' })
+  @ApiResponse({ status: 204 })
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(204)
