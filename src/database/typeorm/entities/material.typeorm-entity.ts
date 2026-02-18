@@ -4,14 +4,18 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { MaterialCategory } from '../../../common/domain/enums/material-category.enum';
 import { UserTypeOrmEntity } from './user.typeorm-entity';
+import { MaterialCategoryTypeOrmEntity } from './material-category.typeorm-entity';
+import { MaterialLinkTypeOrmEntity } from './material-link.typeorm-entity';
+import { StudentMaterialAccessTypeOrmEntity } from './student-material-access.typeorm-entity';
 
 @Entity('materials')
 @Index('materials_created_by_idx', ['createdById'])
 @Index('materials_published_idx', ['published'])
+@Index('materials_category_id_idx', ['categoryId'])
 export class MaterialTypeOrmEntity {
   @PrimaryGeneratedColumn({
     type: 'bigint',
@@ -25,21 +29,27 @@ export class MaterialTypeOrmEntity {
   @Column({ type: 'text' })
   description!: string;
 
-  @Column({
-    name: 'drive_url',
-    type: 'text',
-  })
-  driveUrl!: string;
-
-  @Column({
-    type: 'text',
-    enum: MaterialCategory,
-    default: MaterialCategory.THEORY,
-  })
-  category!: MaterialCategory;
-
   @Column({ type: 'boolean', default: true })
   published!: boolean;
+
+  @Column({
+    name: 'category_id',
+    type: 'bigint',
+  })
+  categoryId!: string;
+
+  @ManyToOne(
+    () => MaterialCategoryTypeOrmEntity,
+    (category) => category.materials,
+    {
+      onDelete: 'RESTRICT',
+    },
+  )
+  @JoinColumn({
+    name: 'category_id',
+    foreignKeyConstraintName: 'materials_category_id_fkey',
+  })
+  category!: MaterialCategoryTypeOrmEntity;
 
   @Column({ name: 'created_by', type: 'bigint' })
   createdById!: string;
@@ -59,4 +69,13 @@ export class MaterialTypeOrmEntity {
     default: () => 'now()',
   })
   createdAt!: Date;
+
+  @OneToMany(() => MaterialLinkTypeOrmEntity, (link) => link.material)
+  links!: MaterialLinkTypeOrmEntity[];
+
+  @OneToMany(
+    () => StudentMaterialAccessTypeOrmEntity,
+    (studentAccess) => studentAccess.material,
+  )
+  studentAccesses!: StudentMaterialAccessTypeOrmEntity[];
 }

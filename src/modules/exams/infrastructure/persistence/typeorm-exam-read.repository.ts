@@ -17,12 +17,27 @@ export class TypeOrmExamReadRepository implements ExamReadRepositoryPort {
       where: { isActive: true },
       relations: ['questions'],
       order: {
+        createdAt: 'DESC',
         questions: {
           position: 'ASC',
         },
       },
     });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  async findActiveMany(): Promise<Exam[]> {
+    const entities = await this.repository.find({
+      where: { isActive: true },
+      relations: ['questions'],
+      order: {
+        createdAt: 'DESC',
+        questions: {
+          position: 'ASC',
+        },
+      },
+    });
+    return entities.map((entity) => this.toDomain(entity));
   }
 
   async findById(id: string): Promise<Exam | null> {
@@ -45,6 +60,7 @@ export class TypeOrmExamReadRepository implements ExamReadRepositoryPort {
       description: entity.description,
       passScore: Number(entity.passScore),
       isActive: entity.isActive,
+      createdAt: entity.createdAt,
       questions: entity.questions.map((question) => ({
         id: question.id,
         questionText: question.questionText,

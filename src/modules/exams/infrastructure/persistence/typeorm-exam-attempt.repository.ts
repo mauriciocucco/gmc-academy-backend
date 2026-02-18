@@ -45,7 +45,7 @@ export class TypeOrmExamAttemptRepository implements ExamAttemptRepositoryPort {
         studentId: payload.studentId,
         examAttemptId: savedAttempt.id,
         certificateCode,
-        pdfPath: null,
+        pdfUrl: null,
       });
       await certificateRepository.save(certificate);
 

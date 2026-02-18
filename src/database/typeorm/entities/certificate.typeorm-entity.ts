@@ -54,11 +54,11 @@ export class CertificateTypeOrmEntity {
   certificateCode!: string;
 
   @Column({
-    name: 'pdf_path',
+    name: 'pdf_url',
     type: 'text',
     nullable: true,
   })
-  pdfPath!: string | null;
+  pdfUrl!: string | null;
 
   @Column({
     name: 'issued_at',

@@ -6,7 +6,7 @@ export type LatestCertificate = {
   id: string;
   certificateCode: string;
   issuedAt: Date;
-  pdfPath: string | null;
+  pdfUrl: string | null;
   examTitle: string;
   attemptScore: number;
 };

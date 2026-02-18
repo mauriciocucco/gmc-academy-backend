@@ -24,12 +24,17 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
     return entity ? this.toDomain(entity) : null;
   }
 
-  async create(
-    payload: Pick<User, 'email' | 'fullName' | 'passwordHash' | 'role'>,
-  ): Promise<User> {
+  async create(payload: {
+    email: string;
+    fullName: string;
+    phone?: string | null;
+    passwordHash: string;
+    role: User['role'];
+  }): Promise<User> {
     const entity = this.repository.create({
       email: payload.email.toLowerCase().trim(),
       fullName: payload.fullName,
+      phone: payload.phone,
       passwordHash: payload.passwordHash,
       role: payload.role,
     });
@@ -53,6 +58,7 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
       id: entity.id,
       email: entity.email,
       fullName: entity.fullName,
+      phone: entity.phone,
       role: entity.role,
       passwordHash: entity.passwordHash,
       refreshTokenHash: entity.refreshTokenHash,

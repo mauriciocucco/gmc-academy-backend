@@ -31,7 +31,7 @@ export class TypeOrmCertificateReadRepository implements CertificateReadReposito
       id: entity.id,
       certificateCode: entity.certificateCode,
       issuedAt: entity.issuedAt,
-      pdfPath: entity.pdfPath,
+      pdfUrl: entity.pdfUrl,
       examTitle: entity.examAttempt.exam.title,
       attemptScore: Number(entity.examAttempt.score),
     };

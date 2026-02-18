@@ -1,13 +1,13 @@
 import {
+  IsArray,
   IsBoolean,
-  IsEnum,
   IsOptional,
   IsString,
-  IsUrl,
   Length,
-  Matches,
+  ValidateNested,
 } from 'class-validator';
-import { MaterialCategory } from '../../../../common/domain/enums/material-category.enum';
+import { Type } from 'class-transformer';
+import { MaterialLinkInputDto } from './create-material.dto';
 
 export class UpdateMaterialDto {
   @IsOptional()
@@ -21,15 +21,15 @@ export class UpdateMaterialDto {
   description?: string;
 
   @IsOptional()
-  @IsUrl({ require_tld: false })
-  @Matches(/drive\.google\.com/i, {
-    message: 'driveUrl must be a Google Drive URL',
-  })
-  driveUrl?: string;
+  @IsString()
+  @Length(2, 50)
+  categoryKey?: string;
 
   @IsOptional()
-  @IsEnum(MaterialCategory)
-  category?: MaterialCategory;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MaterialLinkInputDto)
+  links?: MaterialLinkInputDto[];
 
   @IsOptional()
   @IsBoolean()

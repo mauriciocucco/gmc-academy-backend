@@ -8,9 +8,11 @@ Backend NestJS para la plataforma e-learning de Autoescuela GMC.
 - PostgreSQL
 - TypeORM
 - JWT (access + refresh)
-- Arquitectura hexagonal por módulo
+- Arquitectura hexagonal por modulo
+- Generacion PDF con `pdfkit`
+- Storage de certificados en Cloudinary
 
-## Módulos MVP
+## Modulos
 
 - `auth`
 - `users`
@@ -20,22 +22,15 @@ Backend NestJS para la plataforma e-learning de Autoescuela GMC.
 - `certificates`
 - `admin`
 
-## Estructura (hexagonal)
-
-Cada módulo sigue:
-
-- `domain`: puertos/modelos
-- `application`: casos de uso + DTOs
-- `infrastructure`: adaptadores TypeORM/JWT/bcrypt
-- `presentation`: controllers REST
-
 ## Variables de entorno
 
 Usar `.env.example` como base.
 
-Variables clave:
+Claves principales:
 
 - `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`
+- `DB_SSL`, `DB_SSL_REJECT_UNAUTHORIZED`
+- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`, `CLOUDINARY_FOLDER`
 - `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`
 - `JWT_ACCESS_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`
 - `BCRYPT_ROUNDS`
@@ -48,15 +43,15 @@ Variables clave:
 pnpm install
 ```
 
-2. Crear base de datos PostgreSQL y configurar `.env`.
+2. Configurar `.env`.
 
-3. Correr migraciones:
+3. Ejecutar migraciones:
 
 ```bash
 pnpm migration:run
 ```
 
-4. Cargar seed inicial:
+4. Cargar seed:
 
 ```bash
 pnpm seed
@@ -80,25 +75,54 @@ Base URL:
 
 ## Endpoints v1
 
+Auth y perfil:
+
 - `POST /auth/login`
 - `POST /auth/refresh`
 - `POST /auth/logout`
 - `GET /me`
+
+Materials:
+
 - `GET /materials`
+- `GET /materials/categories`
 - `POST /materials` (admin)
 - `PATCH /materials/:id` (admin)
 - `DELETE /materials/:id` (admin)
-- `GET /exams/active`
-- `POST /exams/:id/submit` (student)
-- `GET /attempts/me` (student)
-- `GET /certificates/me/latest` (student)
-- `GET /admin/students` (admin)
-- `GET /admin/stats` (admin)
+- `POST /materials/categories` (admin)
+- `PATCH /materials/:id/access/:studentId` (admin)
 
-## Notas
+Exams:
+
+- `GET /exams` (student: activos, admin: todos)
+- `GET /exams/active`
+- `GET /exams/:id` (admin)
+- `POST /exams` (admin)
+- `PATCH /exams/:id` (admin)
+- `DELETE /exams/:id` (admin)
+- `POST /exams/:id/submit` (student)
+
+Attempts:
+
+- `GET /attempts/me` (student)
+
+Certificates:
+
+- `GET /certificates/me/latest` (student)
+- `POST /certificates/me/latest/generate-pdf` (student, sube a Cloudinary y guarda URL)
+
+Admin:
+
+- `GET /admin/students`
+- `GET /admin/stats`
+- `GET /admin/performance`
+
+## Notas tecnicas
 
 - Prefijo global: `/api`
 - Versionado URI: `/v1`
-- Validación global con `ValidationPipe`
+- Validacion global con `ValidationPipe`
 - Guards: `JwtAuthGuard` + `RolesGuard`
-- Migración inicial: `src/database/migrations/1768650000000-InitSchema.ts`
+- Migraciones:
+  - `src/database/migrations/1768650000000-InitSchema.ts`
+  - `src/database/migrations/1768651000000-ExpandAcademySchema.ts`

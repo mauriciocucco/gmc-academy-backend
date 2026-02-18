@@ -5,6 +5,7 @@ import {
 } from '../../domain/ports/material-repository.port';
 import { UpdateMaterialDto } from '../dto/update-material.dto';
 import { MaterialResponseDto } from '../dto/material-response.dto';
+import { validateMaterialLinks } from './material-link.validation';
 
 @Injectable()
 export class UpdateMaterialUseCase {
@@ -17,11 +18,19 @@ export class UpdateMaterialUseCase {
     id: string,
     dto: UpdateMaterialDto,
   ): Promise<MaterialResponseDto> {
+    if (dto.links) {
+      validateMaterialLinks(dto.links);
+    }
+
     const material = await this.materialRepository.update(id, {
       title: dto.title?.trim(),
       description: dto.description?.trim(),
-      driveUrl: dto.driveUrl?.trim(),
-      category: dto.category,
+      categoryKey: dto.categoryKey?.trim().toLowerCase(),
+      links: dto.links?.map((link, index) => ({
+        sourceType: link.sourceType,
+        url: link.url.trim(),
+        position: link.position ?? index,
+      })),
       published: dto.published,
     });
 
@@ -33,11 +42,22 @@ export class UpdateMaterialUseCase {
       id: material.id,
       title: material.title,
       description: material.description,
-      driveUrl: material.driveUrl,
-      category: material.category,
       published: material.published,
       publishedAt: material.createdAt.toISOString().slice(0, 10),
       createdById: material.createdById,
+      category: {
+        id: material.category.id,
+        key: material.category.key,
+        name: material.category.name,
+      },
+      links: material.links
+        .sort((a, b) => a.position - b.position)
+        .map((link) => ({
+          id: link.id,
+          sourceType: link.sourceType,
+          url: link.url,
+          position: link.position,
+        })),
     };
   }
 }

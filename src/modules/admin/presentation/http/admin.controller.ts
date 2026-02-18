@@ -6,9 +6,11 @@ import { UserRole } from '../../../../common/domain/enums/user-role.enum';
 import { ListAdminStudentsUseCase } from '../../application/use-cases/list-admin-students.use-case';
 import { GetAdminStatsUseCase } from '../../application/use-cases/get-admin-stats.use-case';
 import {
+  AdminPerformance,
   AdminStats,
   AdminStudentItem,
 } from '../../domain/ports/admin-read-repository.port';
+import { GetAdminPerformanceUseCase } from '../../application/use-cases/get-admin-performance.use-case';
 
 @Controller({ path: 'admin', version: '1' })
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -17,6 +19,7 @@ export class AdminController {
   constructor(
     private readonly listAdminStudentsUseCase: ListAdminStudentsUseCase,
     private readonly getAdminStatsUseCase: GetAdminStatsUseCase,
+    private readonly getAdminPerformanceUseCase: GetAdminPerformanceUseCase,
   ) {}
 
   @Get('students')
@@ -27,5 +30,10 @@ export class AdminController {
   @Get('stats')
   async stats(): Promise<AdminStats> {
     return this.getAdminStatsUseCase.execute();
+  }
+
+  @Get('performance')
+  async performance(): Promise<AdminPerformance> {
+    return this.getAdminPerformanceUseCase.execute();
   }
 }

@@ -8,7 +8,7 @@ export type LatestCertificateResponseDto = {
   id: string;
   certificateCode: string;
   issuedAt: string;
-  pdfPath: string | null;
+  pdfUrl: string | null;
   examTitle: string;
   attemptScore: number;
 } | null;
@@ -31,7 +31,7 @@ export class GetLatestCertificateUseCase {
       id: certificate.id,
       certificateCode: certificate.certificateCode,
       issuedAt: certificate.issuedAt.toISOString(),
-      pdfPath: certificate.pdfPath,
+      pdfUrl: certificate.pdfUrl,
       examTitle: certificate.examTitle,
       attemptScore: certificate.attemptScore,
     };

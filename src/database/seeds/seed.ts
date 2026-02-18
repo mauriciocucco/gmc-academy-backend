@@ -4,7 +4,10 @@ import { AppDataSource } from '../typeorm.datasource';
 import { UserTypeOrmEntity } from '../typeorm/entities/user.typeorm-entity';
 import { UserRole } from '../../common/domain/enums/user-role.enum';
 import { MaterialTypeOrmEntity } from '../typeorm/entities/material.typeorm-entity';
-import { MaterialCategory } from '../../common/domain/enums/material-category.enum';
+import { MaterialCategoryTypeOrmEntity } from '../typeorm/entities/material-category.typeorm-entity';
+import { MaterialLinkTypeOrmEntity } from '../typeorm/entities/material-link.typeorm-entity';
+import { MaterialLinkSource } from '../../common/domain/enums/material-link-source.enum';
+import { StudentMaterialAccessTypeOrmEntity } from '../typeorm/entities/student-material-access.typeorm-entity';
 import { ExamTypeOrmEntity } from '../typeorm/entities/exam.typeorm-entity';
 import { ExamQuestionTypeOrmEntity } from '../typeorm/entities/exam-question.typeorm-entity';
 import { ExamAttemptTypeOrmEntity } from '../typeorm/entities/exam-attempt.typeorm-entity';
@@ -15,8 +18,17 @@ async function runSeed(): Promise<void> {
 
   try {
     const userRepository = AppDataSource.getRepository(UserTypeOrmEntity);
+    const categoryRepository = AppDataSource.getRepository(
+      MaterialCategoryTypeOrmEntity,
+    );
     const materialRepository = AppDataSource.getRepository(
       MaterialTypeOrmEntity,
+    );
+    const linkRepository = AppDataSource.getRepository(
+      MaterialLinkTypeOrmEntity,
+    );
+    const accessRepository = AppDataSource.getRepository(
+      StudentMaterialAccessTypeOrmEntity,
     );
     const examRepository = AppDataSource.getRepository(ExamTypeOrmEntity);
     const questionRepository = AppDataSource.getRepository(
@@ -41,6 +53,7 @@ async function runSeed(): Promise<void> {
         userRepository.create({
           email: 'admin@gmc.com',
           fullName: 'Administrador GMC',
+          phone: '+5491111111111',
           role: UserRole.ADMIN,
           passwordHash,
         }),
@@ -55,50 +68,131 @@ async function runSeed(): Promise<void> {
         userRepository.create({
           email: 'student@gmc.com',
           fullName: 'Alumno Demo GMC',
+          phone: '+5491122222222',
           role: UserRole.STUDENT,
           passwordHash,
         }),
       );
     }
 
-    const materialCount = await materialRepository.count();
-    if (materialCount === 0) {
-      await materialRepository.save([
-        materialRepository.create({
-          title: 'Manual de senales viales',
-          description:
-            'Material base para reconocer senales reglamentarias y preventivas.',
-          driveUrl: 'https://drive.google.com/file/d/1manual-senales-gmc/view',
-          category: MaterialCategory.SIGNS,
-          createdById: admin.id,
-          published: true,
+    const ensureCategory = async (
+      key: string,
+      name: string,
+    ): Promise<MaterialCategoryTypeOrmEntity> => {
+      const existing = await categoryRepository.findOne({ where: { key } });
+      if (existing) {
+        return existing;
+      }
+
+      return categoryRepository.save(
+        categoryRepository.create({
+          key,
+          name,
         }),
-        materialRepository.create({
-          title: 'Resumen de prioridad de paso',
-          description:
-            'Guia rapida de normas para cruces, rotondas y avenidas.',
-          driveUrl: 'https://drive.google.com/file/d/1prioridad-paso-gmc/view',
-          category: MaterialCategory.THEORY,
-          createdById: admin.id,
-          published: true,
-        }),
-        materialRepository.create({
-          title: 'Simulacro de examen 1',
-          description: 'Banco de preguntas tipo examen municipal.',
-          driveUrl: 'https://drive.google.com/file/d/1simulacro-gmc-01/view',
-          category: MaterialCategory.MOCK,
-          createdById: admin.id,
-          published: true,
-        }),
-      ]);
-    }
+      );
+    };
+
+    const theoryCategory = await ensureCategory('theory', 'Theory');
+    const signsCategory = await ensureCategory('signs', 'Signs');
+    const mockCategory = await ensureCategory('mock', 'Mock');
+
+    const ensureMaterial = async (payload: {
+      title: string;
+      description: string;
+      categoryId: string;
+      links: Array<{ sourceType: MaterialLinkSource; url: string }>;
+    }): Promise<MaterialTypeOrmEntity> => {
+      let material = await materialRepository.findOne({
+        where: { title: payload.title },
+      });
+      if (!material) {
+        material = await materialRepository.save(
+          materialRepository.create({
+            title: payload.title,
+            description: payload.description,
+            categoryId: payload.categoryId,
+            createdById: admin.id,
+            published: true,
+          }),
+        );
+      }
+
+      const linksCount = await linkRepository.count({
+        where: { materialId: material.id },
+      });
+      if (linksCount === 0) {
+        await linkRepository.save(
+          payload.links.map((link, index) =>
+            linkRepository.create({
+              materialId: material.id,
+              sourceType: link.sourceType,
+              url: link.url,
+              position: index,
+            }),
+          ),
+        );
+      }
+
+      await accessRepository.upsert(
+        {
+          materialId: material.id,
+          studentId: student.id,
+          enabled: true,
+          enabledById: admin.id,
+          enabledAt: new Date(),
+        },
+        ['materialId', 'studentId'],
+      );
+
+      return material;
+    };
+
+    await ensureMaterial({
+      title: 'Road signs handbook',
+      description: 'Core material for regulatory and preventive road signs.',
+      categoryId: signsCategory.id,
+      links: [
+        {
+          sourceType: MaterialLinkSource.DRIVE,
+          url: 'https://drive.google.com/file/d/1manual-senales-gmc/view',
+        },
+        {
+          sourceType: MaterialLinkSource.YOUTUBE,
+          url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+        },
+      ],
+    });
+
+    await ensureMaterial({
+      title: 'Right-of-way summary',
+      description: 'Quick guide for intersections, roundabouts and avenues.',
+      categoryId: theoryCategory.id,
+      links: [
+        {
+          sourceType: MaterialLinkSource.DRIVE,
+          url: 'https://drive.google.com/file/d/1prioridad-paso-gmc/view',
+        },
+      ],
+    });
+
+    await ensureMaterial({
+      title: 'Mock exam pack 1',
+      description: 'Question bank similar to municipal exam formats.',
+      categoryId: mockCategory.id,
+      links: [
+        {
+          sourceType: MaterialLinkSource.DRIVE,
+          url: 'https://drive.google.com/file/d/1simulacro-gmc-01/view',
+        },
+      ],
+    });
 
     let exam = await examRepository.findOne({ where: { isActive: true } });
     if (!exam) {
       exam = await examRepository.save(
         examRepository.create({
-          title: 'Simulacro teorico GMC',
-          description: 'Examen de practica para licencia de conducir',
+          title: 'GMC Theory Mock Exam',
+          description: 'Practice exam for driving license preparation',
           passScore: '70',
           isActive: true,
         }),
@@ -112,59 +206,29 @@ async function runSeed(): Promise<void> {
       await questionRepository.save([
         questionRepository.create({
           examId: exam.id,
-          questionText: 'Que documentacion debe llevar un conductor?',
+          questionText: 'What documents must a driver carry?',
           optionsJson: [
-            { id: 'a', label: 'Solo licencia de conducir' },
-            { id: 'b', label: 'Licencia, cedula, seguro y VTV vigente' },
-            { id: 'c', label: 'Licencia y comprobante de combustible' },
+            { id: 'a', label: 'Only driving license' },
+            {
+              id: 'b',
+              label:
+                'License, registration, insurance, and valid vehicle inspection',
+            },
+            { id: 'c', label: 'License and fuel receipt' },
           ],
           correctOption: 'b',
           position: 1,
         }),
         questionRepository.create({
           examId: exam.id,
-          questionText:
-            'En una interseccion sin semaforo, quien tiene prioridad?',
+          questionText: 'At an uncontrolled intersection, who has priority?',
           optionsJson: [
-            { id: 'a', label: 'El vehiculo que viene por la derecha' },
-            { id: 'b', label: 'El vehiculo mas grande' },
-            { id: 'c', label: 'El que acelera primero' },
+            { id: 'a', label: 'Vehicle coming from the right' },
+            { id: 'b', label: 'Largest vehicle' },
+            { id: 'c', label: 'Who accelerates first' },
           ],
           correctOption: 'a',
           position: 2,
-        }),
-        questionRepository.create({
-          examId: exam.id,
-          questionText: 'Por donde debe realizarse el adelantamiento?',
-          optionsJson: [
-            { id: 'a', label: 'Por la derecha siempre' },
-            { id: 'b', label: 'Por la izquierda, en condiciones seguras' },
-            { id: 'c', label: 'Por banquina si hay lugar' },
-          ],
-          correctOption: 'b',
-          position: 3,
-        }),
-        questionRepository.create({
-          examId: exam.id,
-          questionText: 'En una rotonda, la prioridad corresponde a:',
-          optionsJson: [
-            { id: 'a', label: 'Quien quiere ingresar' },
-            { id: 'b', label: 'Quien circula dentro de la rotonda' },
-            { id: 'c', label: 'Quien toca bocina' },
-          ],
-          correctOption: 'b',
-          position: 4,
-        }),
-        questionRepository.create({
-          examId: exam.id,
-          questionText: 'La distancia de seguridad recomendada depende de:',
-          optionsJson: [
-            { id: 'a', label: 'La velocidad y condicion del transito' },
-            { id: 'b', label: 'El tamano de tu vehiculo unicamente' },
-            { id: 'c', label: 'La marca de los neumaticos' },
-          ],
-          correctOption: 'a',
-          position: 5,
         }),
       ]);
     }
@@ -195,7 +259,7 @@ async function runSeed(): Promise<void> {
           studentId: student.id,
           examAttemptId: attempt.id,
           certificateCode: `GMC-${new Date().getUTCFullYear()}-SEED0001`,
-          pdfPath: null,
+          pdfUrl: null,
         }),
       );
     }
