@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import {
   CERTIFICATE_READ_REPOSITORY,
   CertificateReadRepositoryPort,
@@ -11,7 +11,7 @@ export type LatestCertificateResponseDto = {
   pdfUrl: string | null;
   examTitle: string;
   attemptScore: number;
-} | null;
+};
 
 @Injectable()
 export class GetLatestCertificateUseCase {
@@ -24,7 +24,7 @@ export class GetLatestCertificateUseCase {
     const certificate =
       await this.certificateReadRepository.findLatestForStudent(studentId);
     if (!certificate) {
-      return null;
+      throw new NotFoundException('No certificate found for this student');
     }
 
     return {

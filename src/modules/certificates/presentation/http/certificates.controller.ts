@@ -34,9 +34,7 @@ export class CertificatesController {
   @ApiOperation({ summary: "Get current student's latest certificate" })
   @ApiResponse({
     status: 200,
-    description: 'Latest certificate or null',
     schema: {
-      nullable: true,
       type: 'object',
       properties: {
         id: { type: 'string' },
@@ -48,6 +46,7 @@ export class CertificatesController {
       },
     },
   })
+  @ApiResponse({ status: 404, description: 'No certificate found' })
   @Get('me/latest')
   async latest(
     @CurrentUser() user: JwtPayload,
