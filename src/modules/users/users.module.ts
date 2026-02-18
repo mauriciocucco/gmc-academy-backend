@@ -10,7 +10,11 @@ import { TypeOrmUserRepository } from './infrastructure/persistence/typeorm-user
 import { TypeOrmProgressRepository } from './infrastructure/persistence/typeorm-progress.repository';
 import { GetMeUseCase } from './application/use-cases/get-me.use-case';
 import { GetMyProgressUseCase } from './application/use-cases/get-my-progress.use-case';
+import { UpdateMyProfileUseCase } from './application/use-cases/update-my-profile.use-case';
+import { UploadMyProfilePhotoUseCase } from './application/use-cases/upload-my-profile-photo.use-case';
 import { UsersController } from './presentation/http/users.controller';
+import { PROFILE_PHOTO_STORAGE } from './domain/ports/profile-photo-storage.port';
+import { CloudinaryProfilePhotoStorageAdapter } from './infrastructure/storage/cloudinary-profile-photo-storage.adapter';
 
 @Module({
   imports: [
@@ -25,9 +29,15 @@ import { UsersController } from './presentation/http/users.controller';
   providers: [
     GetMeUseCase,
     GetMyProgressUseCase,
+    UpdateMyProfileUseCase,
+    UploadMyProfilePhotoUseCase,
     {
       provide: USER_REPOSITORY,
       useClass: TypeOrmUserRepository,
+    },
+    {
+      provide: PROFILE_PHOTO_STORAGE,
+      useClass: CloudinaryProfilePhotoStorageAdapter,
     },
     {
       provide: PROGRESS_REPOSITORY,

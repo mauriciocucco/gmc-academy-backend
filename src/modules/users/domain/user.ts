@@ -5,6 +5,7 @@ export interface User {
   email: string;
   fullName: string;
   phone: string | null;
+  profilePhotoUrl: string | null;
   role: UserRole;
   passwordHash: string;
   refreshTokenHash: string | null;

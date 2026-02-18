@@ -14,6 +14,12 @@ export class UserResponseDto {
   @ApiProperty({ example: '+1234567890', nullable: true })
   phone!: string | null;
 
+  @ApiProperty({
+    example: 'https://res.cloudinary.com/demo/image/upload/v123/profile.jpg',
+    nullable: true,
+  })
+  profilePhotoUrl!: string | null;
+
   @ApiProperty({ enum: UserRole })
   role!: UserRole;
 }

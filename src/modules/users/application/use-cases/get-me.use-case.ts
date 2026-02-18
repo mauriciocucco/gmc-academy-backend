@@ -23,6 +23,7 @@ export class GetMeUseCase {
       email: user.email,
       fullName: user.fullName,
       phone: user.phone,
+      profilePhotoUrl: user.profilePhotoUrl,
       role: user.role,
     };
   }

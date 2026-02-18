@@ -28,6 +28,7 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
     email: string;
     fullName: string;
     phone?: string | null;
+    profilePhotoUrl?: string | null;
     passwordHash: string;
     role: User['role'];
   }): Promise<User> {
@@ -35,6 +36,7 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
       email: payload.email.toLowerCase().trim(),
       fullName: payload.fullName,
       phone: payload.phone,
+      profilePhotoUrl: payload.profilePhotoUrl ?? null,
       passwordHash: payload.passwordHash,
       role: payload.role,
     });
@@ -53,12 +55,42 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
     await this.repository.update({ id: userId }, { refreshTokenHash: null });
   }
 
+  async updateProfile(payload: {
+    userId: string;
+    fullName?: string;
+    phone?: string | null;
+    email?: string;
+  }): Promise<User> {
+    await this.repository.update(
+      { id: payload.userId },
+      {
+        fullName: payload.fullName,
+        phone: payload.phone,
+        email: payload.email ? payload.email.toLowerCase().trim() : undefined,
+      },
+    );
+    const updated = await this.repository.findOne({
+      where: { id: payload.userId },
+    });
+    return this.toDomain(updated as UserTypeOrmEntity);
+  }
+
+  async updateProfilePhoto(
+    userId: string,
+    profilePhotoUrl: string,
+  ): Promise<User> {
+    await this.repository.update({ id: userId }, { profilePhotoUrl });
+    const updated = await this.repository.findOne({ where: { id: userId } });
+    return this.toDomain(updated as UserTypeOrmEntity);
+  }
+
   private toDomain(entity: UserTypeOrmEntity): User {
     return {
       id: entity.id,
       email: entity.email,
       fullName: entity.fullName,
       phone: entity.phone,
+      profilePhotoUrl: entity.profilePhotoUrl,
       role: entity.role,
       passwordHash: entity.passwordHash,
       refreshTokenHash: entity.refreshTokenHash,

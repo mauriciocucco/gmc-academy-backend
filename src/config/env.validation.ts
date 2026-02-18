@@ -13,6 +13,7 @@ type Environment = {
   CLOUDINARY_API_KEY: string;
   CLOUDINARY_API_SECRET: string;
   CLOUDINARY_FOLDER: string;
+  CLOUDINARY_PROFILE_PHOTOS_FOLDER: string;
   JWT_ACCESS_SECRET: string;
   JWT_REFRESH_SECRET: string;
   JWT_ACCESS_EXPIRES_IN: string;
@@ -84,6 +85,10 @@ export function validateEnv(raw: Record<string, unknown>): Environment {
     CLOUDINARY_FOLDER: getOptionalString(
       env.CLOUDINARY_FOLDER,
       'gmc-academy/certificates',
+    ),
+    CLOUDINARY_PROFILE_PHOTOS_FOLDER: getOptionalString(
+      env.CLOUDINARY_PROFILE_PHOTOS_FOLDER,
+      'gmc-academy/profile-photos',
     ),
     JWT_ACCESS_SECRET: getRequiredString(
       env.JWT_ACCESS_SECRET,

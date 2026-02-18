@@ -33,6 +33,13 @@ export class UserTypeOrmEntity {
   phone!: string | null;
 
   @Column({
+    name: 'profile_photo_url',
+    type: 'text',
+    nullable: true,
+  })
+  profilePhotoUrl!: string | null;
+
+  @Column({
     type: 'text',
     enum: UserRole,
   })
