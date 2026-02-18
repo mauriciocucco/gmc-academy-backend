@@ -78,4 +78,11 @@ export class StudentMaterialAccessTypeOrmEntity {
     nullable: true,
   })
   enabledAt!: Date | null;
+
+  @Column({
+    name: 'viewed_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  viewedAt!: Date | null;
 }

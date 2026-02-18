@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CERTIFICATE_PDF_REPOSITORY,
   CertificatePdfRepositoryPort,
@@ -11,6 +16,10 @@ import {
   FILE_STORAGE,
   FileStoragePort,
 } from '../../domain/ports/file-storage.port';
+import {
+  PROGRESS_REPOSITORY,
+  ProgressRepositoryPort,
+} from '../../../users/domain/ports/progress-repository.port';
 
 export type GeneratedCertificatePdfResponseDto = {
   certificateId: string;
@@ -26,11 +35,24 @@ export class GenerateCertificatePdfUseCase {
     private readonly certificateDocumentBuilder: CertificateDocumentBuilderPort,
     @Inject(FILE_STORAGE)
     private readonly fileStorage: FileStoragePort,
+    @Inject(PROGRESS_REPOSITORY)
+    private readonly progressRepository: ProgressRepositoryPort,
   ) {}
 
   async execute(
     studentId: string,
   ): Promise<GeneratedCertificatePdfResponseDto> {
+    const progress =
+      await this.progressRepository.getStudentProgress(studentId);
+    if (
+      progress.materialsViewed < progress.materialsTotal ||
+      !progress.examPassed
+    ) {
+      throw new ForbiddenException(
+        'You must view all materials and pass the exam before downloading your certificate',
+      );
+    }
+
     const certificate =
       await this.certificatePdfRepository.findLatestByStudent(studentId);
     if (!certificate) {

@@ -37,6 +37,7 @@ import { CreateMaterialCategoryDto } from '../../application/dto/create-material
 import { CreateMaterialCategoryUseCase } from '../../application/use-cases/create-material-category.use-case';
 import { SetStudentMaterialAccessDto } from '../../application/dto/set-student-material-access.dto';
 import { SetStudentMaterialAccessUseCase } from '../../application/use-cases/set-student-material-access.use-case';
+import { MarkMaterialViewedUseCase } from '../../application/use-cases/mark-material-viewed.use-case';
 
 @ApiTags('Materials')
 @ApiBearerAuth('access-token')
@@ -51,6 +52,7 @@ export class MaterialsController {
     private readonly updateMaterialUseCase: UpdateMaterialUseCase,
     private readonly deleteMaterialUseCase: DeleteMaterialUseCase,
     private readonly setStudentMaterialAccessUseCase: SetStudentMaterialAccessUseCase,
+    private readonly markMaterialViewedUseCase: MarkMaterialViewedUseCase,
   ) {}
 
   @ApiOperation({ summary: 'List materials (filtered by role)' })
@@ -126,6 +128,20 @@ export class MaterialsController {
       enabledById: user.sub,
       dto: body,
     });
+  }
+
+  @ApiOperation({ summary: 'Mark a material as viewed (Student only)' })
+  @ApiParam({ name: 'id', description: 'Material ID' })
+  @ApiResponse({ status: 204 })
+  @Post(':id/view')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.STUDENT)
+  @HttpCode(204)
+  async markViewed(
+    @Param('id') materialId: string,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<void> {
+    await this.markMaterialViewedUseCase.execute(materialId, user.sub);
   }
 
   @ApiOperation({ summary: 'Delete a material (Admin only)' })

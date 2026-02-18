@@ -104,6 +104,29 @@ CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
 
 Swagger UI en `http://localhost:3000/api/docs` (requiere que el servidor esté corriendo).
 
+## Seguimiento de progreso del estudiante
+
+El sistema rastrea el avance del estudiante a través de tres señales:
+
+1. **Materiales vistos** — `POST /api/v1/materials/:id/view` (student). Registra `viewed_at` (primera apertura, idempotente) en `student_material_access`. El campo es `TIMESTAMPTZ NULL`; nunca se sobreescribe gracias a `COALESCE(viewed_at, now())`.
+2. **Examen aprobado** — columna `passed` en `exam_attempts`.
+3. **Certificado emitido** — existencia de registro en `certificates` para el estudiante.
+
+`GET /api/v1/me/progress` (student) devuelve:
+
+```json
+{
+  "materialsTotal": 5,
+  "materialsViewed": 3,
+  "examPassed": false,
+  "certificateIssued": false
+}
+```
+
+`POST /api/v1/certificates/me/latest/generate-pdf` lanza `403 ForbiddenException` si `materialsViewed < materialsTotal` o `examPassed === false`.
+
+**Puerto:** `ProgressRepositoryPort` en `src/modules/users/domain/ports/progress-repository.port.ts`. Implementación: `TypeOrmProgressRepository`. Usado tanto en `UsersModule` como en `CertificatesModule` (instancia independiente por módulo).
+
 ## Lo que NO se debe hacer
 
 - No importar entidades TypeORM (`*.typeorm-entity.ts`) desde capas de dominio o aplicación.
@@ -111,3 +134,4 @@ Swagger UI en `http://localhost:3000/api/docs` (requiere que el servidor esté c
 - No omitir `@ApiProperty` en DTOs nuevos.
 - No crear migraciones manualmente; generarlas con TypeORM CLI si corresponde.
 - No usar `any` salvo casos justificados.
+- No sobreescribir `viewed_at` si ya tiene valor; usar `COALESCE` para preservar la primera apertura.

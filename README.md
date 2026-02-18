@@ -71,7 +71,7 @@ Base URL:
 
 - `admin@gmc.com`
 - `student@gmc.com`
-- password: valor de `SEED_DEFAULT_PASSWORD` (default `ChangeMe123!`)
+- password: valor de `SEED_DEFAULT_PASSWORD` (mínimo 6 caracteres)
 
 ## Endpoints v1
 
@@ -81,11 +81,13 @@ Auth y perfil:
 - `POST /auth/refresh`
 - `POST /auth/logout`
 - `GET /me`
+- `GET /me/progress` (student — resumen de progreso)
 
 Materials:
 
 - `GET /materials`
 - `GET /materials/categories`
+- `POST /materials/:id/view` (student — marca material como visto)
 - `POST /materials` (admin)
 - `PATCH /materials/:id` (admin)
 - `DELETE /materials/:id` (admin)
@@ -109,7 +111,7 @@ Attempts:
 Certificates:
 
 - `GET /certificates/me/latest` (student)
-- `POST /certificates/me/latest/generate-pdf` (student, sube a Cloudinary y guarda URL)
+- `POST /certificates/me/latest/generate-pdf` (student — requiere todos los materiales vistos y examen aprobado)
 
 Admin:
 
@@ -134,3 +136,4 @@ Incluye todos los endpoints con schemas de request/response y soporte para auten
 - Migraciones:
   - `src/database/migrations/1768650000000-InitSchema.ts`
   - `src/database/migrations/1768651000000-ExpandAcademySchema.ts`
+  - `src/database/migrations/1768652000000-AddMaterialViewedAt.ts`

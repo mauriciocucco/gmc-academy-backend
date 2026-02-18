@@ -14,6 +14,7 @@ import { DeleteMaterialUseCase } from './application/use-cases/delete-material.u
 import { ListMaterialCategoriesUseCase } from './application/use-cases/list-material-categories.use-case';
 import { CreateMaterialCategoryUseCase } from './application/use-cases/create-material-category.use-case';
 import { SetStudentMaterialAccessUseCase } from './application/use-cases/set-student-material-access.use-case';
+import { MarkMaterialViewedUseCase } from './application/use-cases/mark-material-viewed.use-case';
 import { UsersModule } from '../users/users.module';
 
 @Module({
@@ -35,6 +36,7 @@ import { UsersModule } from '../users/users.module';
     UpdateMaterialUseCase,
     DeleteMaterialUseCase,
     SetStudentMaterialAccessUseCase,
+    MarkMaterialViewedUseCase,
     {
       provide: MATERIAL_REPOSITORY,
       useClass: TypeOrmMaterialRepository,

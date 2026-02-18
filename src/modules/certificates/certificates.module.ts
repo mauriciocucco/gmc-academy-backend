@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CertificateTypeOrmEntity } from '../../database/typeorm/entities/certificate.typeorm-entity';
+import { StudentMaterialAccessTypeOrmEntity } from '../../database/typeorm/entities/student-material-access.typeorm-entity';
+import { ExamAttemptTypeOrmEntity } from '../../database/typeorm/entities/exam-attempt.typeorm-entity';
 import { CertificatesController } from './presentation/http/certificates.controller';
 import { GetLatestCertificateUseCase } from './application/use-cases/get-latest-certificate.use-case';
 import { CERTIFICATE_READ_REPOSITORY } from './domain/ports/certificate-read-repository.port';
@@ -12,9 +14,17 @@ import { CERTIFICATE_DOCUMENT_BUILDER } from './domain/ports/certificate-documen
 import { PdfkitCertificateDocumentBuilder } from './infrastructure/pdf/pdfkit-certificate-document.builder';
 import { FILE_STORAGE } from './domain/ports/file-storage.port';
 import { CloudinaryFileStorageAdapter } from './infrastructure/storage/cloudinary-file-storage.adapter';
+import { PROGRESS_REPOSITORY } from '../users/domain/ports/progress-repository.port';
+import { TypeOrmProgressRepository } from '../users/infrastructure/persistence/typeorm-progress.repository';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CertificateTypeOrmEntity])],
+  imports: [
+    TypeOrmModule.forFeature([
+      CertificateTypeOrmEntity,
+      StudentMaterialAccessTypeOrmEntity,
+      ExamAttemptTypeOrmEntity,
+    ]),
+  ],
   controllers: [CertificatesController],
   providers: [
     GetLatestCertificateUseCase,
@@ -34,6 +44,10 @@ import { CloudinaryFileStorageAdapter } from './infrastructure/storage/cloudinar
     {
       provide: FILE_STORAGE,
       useClass: CloudinaryFileStorageAdapter,
+    },
+    {
+      provide: PROGRESS_REPOSITORY,
+      useClass: TypeOrmProgressRepository,
     },
   ],
 })

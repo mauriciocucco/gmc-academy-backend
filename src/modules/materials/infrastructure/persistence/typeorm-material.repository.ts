@@ -227,6 +227,30 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
     );
   }
 
+  async markAsViewed(materialId: string, studentId: string): Promise<void> {
+    await this.accessRepository.update(
+      { materialId, studentId, enabled: true },
+      { viewedAt: () => 'COALESCE(viewed_at, now())' },
+    );
+  }
+
+  async countEnabledAndViewedForStudent(
+    studentId: string,
+  ): Promise<{ total: number; viewed: number }> {
+    const result = await this.accessRepository
+      .createQueryBuilder('a')
+      .select('COUNT(*)', 'total')
+      .addSelect('COUNT(a.viewed_at)', 'viewed')
+      .where('a.student_id = :studentId', { studentId })
+      .andWhere('a.enabled = true')
+      .getRawOne<{ total: string; viewed: string }>();
+
+    return {
+      total: Number(result?.total ?? 0),
+      viewed: Number(result?.viewed ?? 0),
+    };
+  }
+
   private toDomain(entity: MaterialTypeOrmEntity): Material {
     return {
       id: entity.id,
