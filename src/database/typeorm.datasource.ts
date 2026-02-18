@@ -6,7 +6,7 @@ const useSsl = (process.env.DB_SSL ?? 'false').toLowerCase() === 'true';
 const rejectUnauthorized =
   (process.env.DB_SSL_REJECT_UNAUTHORIZED ?? 'true').toLowerCase() === 'true';
 
-export const AppDataSource = new DataSource({
+const AppDataSource = new DataSource({
   type: 'postgres',
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT ?? 5432),
