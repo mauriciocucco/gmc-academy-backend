@@ -42,6 +42,12 @@ export class MaterialResponseDto {
   @ApiProperty()
   publishedAt!: string;
 
+  @ApiProperty({
+    nullable: true,
+    description: 'null for admin; true/false for students',
+  })
+  viewed!: boolean | null;
+
   @ApiProperty()
   createdById!: string;
 

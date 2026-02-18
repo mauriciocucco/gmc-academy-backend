@@ -87,7 +87,8 @@ Materials:
 
 - `GET /materials`
 - `GET /materials/categories`
-- `POST /materials/:id/view` (student — marca material como visto)
+- `PATCH /materials/:id/view` (student — `{ viewed: boolean }`, marca o desmarca el visto del material propio)
+- `DELETE /materials/:id/view/:studentId` (admin — resetea el visto de un material para un alumno)
 - `POST /materials` (admin)
 - `PATCH /materials/:id` (admin)
 - `DELETE /materials/:id` (admin)

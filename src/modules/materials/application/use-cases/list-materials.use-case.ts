@@ -28,6 +28,7 @@ export class ListMaterialsUseCase {
       description: material.description,
       published: material.published,
       publishedAt: material.createdAt.toISOString().slice(0, 10),
+      viewed: material.viewed,
       createdById: material.createdById,
       category: {
         id: material.category.id,

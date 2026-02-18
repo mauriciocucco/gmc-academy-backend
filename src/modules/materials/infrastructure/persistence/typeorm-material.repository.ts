@@ -37,23 +37,31 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
       },
     });
 
-    return entities.map((entity) => this.toDomain(entity));
+    return entities.map((entity) => this.toDomain(entity, null));
   }
 
   async findEnabledForStudent(studentId: string): Promise<Material[]> {
-    const entities = await this.materialRepository
+    const rows = await this.materialRepository
       .createQueryBuilder('material')
       .leftJoinAndSelect('material.category', 'category')
       .leftJoinAndSelect('material.links', 'link')
-      .innerJoin('material.studentAccesses', 'student_access')
+      .innerJoin(
+        'material.studentAccesses',
+        'student_access',
+        'student_access.student_id = :studentId AND student_access.enabled = true',
+        { studentId },
+      )
+      .addSelect('student_access.viewed_at', 'student_access_viewed_at')
       .where('material.published = true')
-      .andWhere('student_access.student_id = :studentId', { studentId })
-      .andWhere('student_access.enabled = true')
       .orderBy('material.created_at', 'DESC')
       .addOrderBy('link.position', 'ASC')
-      .getMany();
+      .getRawAndEntities();
 
-    return entities.map((entity) => this.toDomain(entity));
+    return rows.entities.map((entity, index) => {
+      const raw = rows.raw.find((r) => r.material_id === entity.id);
+      const viewedAt: string | null = raw?.student_access_viewed_at ?? null;
+      return this.toDomain(entity, viewedAt !== null);
+    });
   }
 
   async findById(id: string): Promise<Material | null> {
@@ -67,7 +75,7 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
       },
     });
 
-    return entity ? this.toDomain(entity) : null;
+    return entity ? this.toDomain(entity, null) : null;
   }
 
   async create(payload: CreateMaterialPayload): Promise<Material> {
@@ -113,7 +121,7 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
         throw new NotFoundException('Material not found after creation');
       }
 
-      return this.toDomain(hydrated);
+      return this.toDomain(hydrated, null);
     });
   }
 
@@ -173,7 +181,7 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
         relations: ['category', 'links'],
       });
 
-      return hydrated ? this.toDomain(hydrated) : null;
+      return hydrated ? this.toDomain(hydrated, null) : null;
     });
   }
 
@@ -234,6 +242,18 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
     );
   }
 
+  async unmarkAsViewed(materialId: string, studentId: string): Promise<void> {
+    await this.accessRepository
+      .createQueryBuilder()
+      .update()
+      .set({ viewedAt: null as unknown as Date })
+      .where('material_id = :materialId AND student_id = :studentId', {
+        materialId,
+        studentId,
+      })
+      .execute();
+  }
+
   async countEnabledAndViewedForStudent(
     studentId: string,
   ): Promise<{ total: number; viewed: number }> {
@@ -251,12 +271,16 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
     };
   }
 
-  private toDomain(entity: MaterialTypeOrmEntity): Material {
+  private toDomain(
+    entity: MaterialTypeOrmEntity,
+    viewed: boolean | null,
+  ): Material {
     return {
       id: entity.id,
       title: entity.title,
       description: entity.description,
       published: entity.published,
+      viewed,
       category: {
         id: entity.category.id,
         key: entity.category.key,

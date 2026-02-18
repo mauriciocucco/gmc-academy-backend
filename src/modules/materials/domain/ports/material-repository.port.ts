@@ -35,6 +35,7 @@ export interface MaterialRepositoryPort {
     enabledById: string;
   }): Promise<void>;
   markAsViewed(materialId: string, studentId: string): Promise<void>;
+  unmarkAsViewed(materialId: string, studentId: string): Promise<void>;
   countEnabledAndViewedForStudent(
     studentId: string,
   ): Promise<{ total: number; viewed: number }>;

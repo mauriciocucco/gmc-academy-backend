@@ -44,6 +44,7 @@ export class UpdateMaterialUseCase {
       description: material.description,
       published: material.published,
       publishedAt: material.createdAt.toISOString().slice(0, 10),
+      viewed: null,
       createdById: material.createdById,
       category: {
         id: material.category.id,

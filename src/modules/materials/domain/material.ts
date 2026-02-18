@@ -18,6 +18,8 @@ export interface Material {
   title: string;
   description: string;
   published: boolean;
+  /** null when the caller is an admin (no student context) */
+  viewed: boolean | null;
   category: MaterialCategory;
   links: MaterialLink[];
   createdById: string;

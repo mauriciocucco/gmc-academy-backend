@@ -108,7 +108,7 @@ Swagger UI en `http://localhost:3000/api/docs` (requiere que el servidor esté c
 
 El sistema rastrea el avance del estudiante a través de tres señales:
 
-1. **Materiales vistos** — `POST /api/v1/materials/:id/view` (student). Registra `viewed_at` (primera apertura, idempotente) en `student_material_access`. El campo es `TIMESTAMPTZ NULL`; nunca se sobreescribe gracias a `COALESCE(viewed_at, now())`.
+1. **Materiales vistos** — `PATCH /api/v1/materials/:id/view` (student, body `{ viewed: boolean }`). `viewed: true` registra `viewed_at` (primera apertura, idempotente) en `student_material_access`; `viewed: false` lo resetea. El campo es `TIMESTAMPTZ NULL`; nunca se sobreescribe para `true` gracias a `COALESCE(viewed_at, now())`. Intentar marcar un material al que el alumno no tiene acceso devuelve `403`. El listado `GET /api/v1/materials` incluye el campo `viewed: boolean | null` en cada material: `true`/`false` para estudiantes, `null` para admins. Para resetear el visto de un alumno: `DELETE /api/v1/materials/:id/view/:studentId` (admin).
 2. **Examen aprobado** — columna `passed` en `exam_attempts`.
 3. **Certificado emitido** — existencia de registro en `certificates` para el estudiante.
 
@@ -126,6 +126,16 @@ El sistema rastrea el avance del estudiante a través de tres señales:
 `POST /api/v1/certificates/me/latest/generate-pdf` lanza `403 ForbiddenException` si `materialsViewed < materialsTotal` o `examPassed === false`.
 
 **Puerto:** `ProgressRepositoryPort` en `src/modules/users/domain/ports/progress-repository.port.ts`. Implementación: `TypeOrmProgressRepository`. Usado tanto en `UsersModule` como en `CertificatesModule` (instancia independiente por módulo).
+
+## Mantenimiento de documentación
+
+Ante cualquier cambio en el código, actualizar la documentación afectada **en el mismo commit**:
+
+- **AGENTS.md** — si cambia arquitectura, convenciones, endpoints relevantes o comportamiento de negocio.
+- **README.md** — si cambia la lista de endpoints, comandos, variables de entorno o instrucciones de arranque.
+- **Swagger** — siempre: añadir/actualizar `@ApiProperty`, `@ApiOperation` y `@ApiResponse` en DTOs y controllers afectados.
+
+Este archivo (`AGENTS.md`) tiene un **límite de 200 líneas**. Si una sección crece, resumirla o extraerla a `docs/`.
 
 ## Lo que NO se debe hacer
 

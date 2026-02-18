@@ -37,7 +37,8 @@ import { CreateMaterialCategoryDto } from '../../application/dto/create-material
 import { CreateMaterialCategoryUseCase } from '../../application/use-cases/create-material-category.use-case';
 import { SetStudentMaterialAccessDto } from '../../application/dto/set-student-material-access.dto';
 import { SetStudentMaterialAccessUseCase } from '../../application/use-cases/set-student-material-access.use-case';
-import { MarkMaterialViewedUseCase } from '../../application/use-cases/mark-material-viewed.use-case';
+import { SetMaterialViewedDto } from '../../application/dto/set-material-viewed.dto';
+import { SetMaterialViewedUseCase } from '../../application/use-cases/set-material-viewed.use-case';
 
 @ApiTags('Materials')
 @ApiBearerAuth('access-token')
@@ -52,7 +53,7 @@ export class MaterialsController {
     private readonly updateMaterialUseCase: UpdateMaterialUseCase,
     private readonly deleteMaterialUseCase: DeleteMaterialUseCase,
     private readonly setStudentMaterialAccessUseCase: SetStudentMaterialAccessUseCase,
-    private readonly markMaterialViewedUseCase: MarkMaterialViewedUseCase,
+    private readonly setMaterialViewedUseCase: SetMaterialViewedUseCase,
   ) {}
 
   @ApiOperation({ summary: 'List materials (filtered by role)' })
@@ -130,18 +131,40 @@ export class MaterialsController {
     });
   }
 
-  @ApiOperation({ summary: 'Mark a material as viewed (Student only)' })
+  @ApiOperation({ summary: 'Set viewed status of a material (Student only)' })
   @ApiParam({ name: 'id', description: 'Material ID' })
   @ApiResponse({ status: 204 })
-  @Post(':id/view')
+  @Patch(':id/view')
   @UseGuards(RolesGuard)
   @Roles(UserRole.STUDENT)
   @HttpCode(204)
-  async markViewed(
+  async setViewed(
     @Param('id') materialId: string,
+    @Body() body: SetMaterialViewedDto,
     @CurrentUser() user: JwtPayload,
   ): Promise<void> {
-    await this.markMaterialViewedUseCase.execute(materialId, user.sub);
+    await this.setMaterialViewedUseCase.execute(
+      materialId,
+      user.sub,
+      body.viewed,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Reset viewed status of a material for a student (Admin only)',
+  })
+  @ApiParam({ name: 'id', description: 'Material ID' })
+  @ApiParam({ name: 'studentId', description: 'Student user ID' })
+  @ApiResponse({ status: 204 })
+  @Delete(':id/view/:studentId')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @HttpCode(204)
+  async adminUnmarkViewed(
+    @Param('id') materialId: string,
+    @Param('studentId') studentId: string,
+  ): Promise<void> {
+    await this.setMaterialViewedUseCase.execute(materialId, studentId, false);
   }
 
   @ApiOperation({ summary: 'Delete a material (Admin only)' })
