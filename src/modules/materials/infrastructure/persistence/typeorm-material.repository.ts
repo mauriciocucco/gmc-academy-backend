@@ -1,9 +1,14 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
 import {
   CreateMaterialPayload,
   MaterialRepositoryPort,
+  UpdateMaterialCategoryPayload,
   UpdateMaterialPayload,
 } from '../../domain/ports/material-repository.port';
 import { Material, MaterialCategory } from '../../domain/material';
@@ -224,27 +229,73 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
       order: { name: 'ASC' },
     });
 
-    return categories.map((category) => ({
-      id: category.id,
-      key: category.key,
-      name: category.name,
-    }));
+    return categories.map((category) => this.toCategoryDomain(category));
+  }
+
+  async findCategoryById(id: string): Promise<MaterialCategory | null> {
+    const category = await this.categoryRepository.findOne({
+      where: { id },
+    });
+
+    return category ? this.toCategoryDomain(category) : null;
   }
 
   async createCategory(payload: {
     key: string;
     name: string;
   }): Promise<MaterialCategory> {
+    const existing = await this.categoryRepository.findOne({
+      where: { key: payload.key },
+    });
+    if (existing) {
+      throw new ConflictException('Material category key is already in use');
+    }
+
     const category = this.categoryRepository.create({
       key: payload.key,
       name: payload.name,
     });
     const saved = await this.categoryRepository.save(category);
-    return {
-      id: saved.id,
-      key: saved.key,
-      name: saved.name,
-    };
+    return this.toCategoryDomain(saved);
+  }
+
+  async updateCategory(
+    id: string,
+    payload: UpdateMaterialCategoryPayload,
+  ): Promise<MaterialCategory | null> {
+    const current = await this.categoryRepository.findOne({
+      where: { id },
+    });
+    if (!current) {
+      return null;
+    }
+
+    if (payload.key && payload.key !== current.key) {
+      const existing = await this.categoryRepository.findOne({
+        where: { key: payload.key },
+      });
+      if (existing && existing.id !== id) {
+        throw new ConflictException('Material category key is already in use');
+      }
+    }
+
+    current.key = payload.key ?? current.key;
+    current.name = payload.name ?? current.name;
+
+    const saved = await this.categoryRepository.save(current);
+    return this.toCategoryDomain(saved);
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await this.categoryRepository.delete({ id });
+  }
+
+  async categoryHasMaterials(categoryId: string): Promise<boolean> {
+    const count = await this.materialRepository.count({
+      where: { categoryId },
+    });
+
+    return count > 0;
   }
 
   async listStudentAssignments(
@@ -424,6 +475,16 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
       })),
       createdById: entity.createdById,
       createdAt: entity.createdAt,
+    };
+  }
+
+  private toCategoryDomain(
+    entity: MaterialCategoryTypeOrmEntity,
+  ): MaterialCategory {
+    return {
+      id: entity.id,
+      key: entity.key,
+      name: entity.name,
     };
   }
 }

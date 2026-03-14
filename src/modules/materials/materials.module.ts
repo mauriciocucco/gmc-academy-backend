@@ -14,6 +14,9 @@ import { UpdateMaterialUseCase } from './application/use-cases/update-material.u
 import { DeleteMaterialUseCase } from './application/use-cases/delete-material.use-case';
 import { ListMaterialCategoriesUseCase } from './application/use-cases/list-material-categories.use-case';
 import { CreateMaterialCategoryUseCase } from './application/use-cases/create-material-category.use-case';
+import { GetMaterialCategoryUseCase } from './application/use-cases/get-material-category.use-case';
+import { UpdateMaterialCategoryUseCase } from './application/use-cases/update-material-category.use-case';
+import { DeleteMaterialCategoryUseCase } from './application/use-cases/delete-material-category.use-case';
 import { SetStudentMaterialAccessUseCase } from './application/use-cases/set-student-material-access.use-case';
 import { SetMaterialViewedUseCase } from './application/use-cases/set-material-viewed.use-case';
 import { UsersModule } from '../users/users.module';
@@ -35,6 +38,9 @@ import { UsersModule } from '../users/users.module';
     ListMaterialCategoriesUseCase,
     CreateMaterialUseCase,
     CreateMaterialCategoryUseCase,
+    GetMaterialCategoryUseCase,
+    UpdateMaterialCategoryUseCase,
+    DeleteMaterialCategoryUseCase,
     UpdateMaterialUseCase,
     DeleteMaterialUseCase,
     SetStudentMaterialAccessUseCase,

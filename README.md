@@ -92,13 +92,16 @@ Materials:
 - `GET /materials`
 - `GET /materials` devuelve toda la biblioteca para admin; para student devuelve solo materiales asignados y publicados, ordenados por `position` ascendente de la asignacion
 - `GET /materials/categories`
+- `GET /materials/categories/:id`
 - `GET /materials` devuelve `links[]` con `id`, `sourceType`, `url`, `label`, `position`
 - `PATCH /materials/:id/view` (student; `{ viewed: boolean }`, marca o desmarca el visto del material propio si esta asignado y publicado)
 - `DELETE /materials/:id/view/:studentId` (admin; resetea el visto de un material para un alumno)
 - `POST /materials` (admin; cada link requiere `sourceType`, `url`, `label`, `position?`)
 - `PATCH /materials/:id` (admin; mismo contrato de links que create)
 - `DELETE /materials/:id` (admin)
-- `POST /materials/categories` (admin)
+- `POST /materials/categories` (admin; body `{ key, name }`, con `key` unica en lowercase)
+- `PATCH /materials/categories/:id` (admin; body parcial `{ key?, name? }`, mantiene unicidad de `key`)
+- `DELETE /materials/categories/:id` (admin; falla con `400` si la categoria tiene materiales asociados)
 - `PATCH /materials/:id/access/:studentId` (admin)
 
 Exams:

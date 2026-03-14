@@ -16,6 +16,11 @@ export type UpdateMaterialPayload = Partial<
   Omit<CreateMaterialPayload, 'createdById'>
 >;
 
+export type UpdateMaterialCategoryPayload = {
+  key?: string;
+  name?: string;
+};
+
 export type StudentMaterialAssignment = {
   materialId: string;
   position: number;
@@ -30,10 +35,17 @@ export interface MaterialRepositoryPort {
   update(id: string, payload: UpdateMaterialPayload): Promise<Material | null>;
   delete(id: string): Promise<void>;
   listCategories(): Promise<MaterialCategory[]>;
+  findCategoryById(id: string): Promise<MaterialCategory | null>;
   createCategory(payload: {
     key: string;
     name: string;
   }): Promise<MaterialCategory>;
+  updateCategory(
+    id: string,
+    payload: UpdateMaterialCategoryPayload,
+  ): Promise<MaterialCategory | null>;
+  deleteCategory(id: string): Promise<void>;
+  categoryHasMaterials(categoryId: string): Promise<boolean>;
   listStudentAssignments(
     studentId: string,
   ): Promise<StudentMaterialAssignment[]>;

@@ -3,7 +3,6 @@ import {
   Entity,
   Index,
   JoinColumn,
-  ManyToOne,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
@@ -11,8 +10,8 @@ import { UserTypeOrmEntity } from './user.typeorm-entity';
 import { ExamAttemptTypeOrmEntity } from './exam-attempt.typeorm-entity';
 
 @Entity('certificates')
-@Index('certificates_student_id_idx', ['studentId'])
-@Index('certificates_exam_attempt_id_idx', ['examAttemptId'])
+@Index('certificates_student_id_unique_idx', ['studentId'], { unique: true })
+@Index('certificates_exam_attempt_id_idx', ['examAttemptId'], { unique: true })
 @Index('certificates_certificate_code_unique_idx', ['certificateCode'], {
   unique: true,
 })
@@ -29,7 +28,7 @@ export class CertificateTypeOrmEntity {
   @Column({ name: 'exam_attempt_id', type: 'bigint' })
   examAttemptId!: string;
 
-  @ManyToOne(() => UserTypeOrmEntity, (user) => user.certificates, {
+  @OneToOne(() => UserTypeOrmEntity, (user) => user.certificate, {
     onDelete: 'RESTRICT',
   })
   @JoinColumn({

@@ -17,7 +17,6 @@ import { UserTypeOrmEntity } from './user.typeorm-entity';
     unique: true,
   },
 )
-@Index('student_material_access_student_enabled_idx', ['studentId', 'enabled'])
 @Index(
   'student_material_access_student_viewed_idx',
   ['studentId', 'viewedAt'],
@@ -59,32 +58,6 @@ export class StudentMaterialAccessTypeOrmEntity {
     foreignKeyConstraintName: 'student_material_access_student_id_fkey',
   })
   student!: UserTypeOrmEntity;
-
-  @Column({ type: 'boolean', default: false })
-  enabled!: boolean;
-
-  @Column({
-    name: 'enabled_by',
-    type: 'bigint',
-    nullable: true,
-  })
-  enabledById!: string | null;
-
-  @ManyToOne(() => UserTypeOrmEntity, (user) => user.materialAccessManaged, {
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn({
-    name: 'enabled_by',
-    foreignKeyConstraintName: 'student_material_access_enabled_by_fkey',
-  })
-  enabledBy!: UserTypeOrmEntity | null;
-
-  @Column({
-    name: 'enabled_at',
-    type: 'timestamptz',
-    nullable: true,
-  })
-  enabledAt!: Date | null;
 
   @Column({
     name: 'viewed_at',

@@ -4,6 +4,7 @@ import {
   Entity,
   Index,
   OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { MaterialTypeOrmEntity } from './material.typeorm-entity';
@@ -79,23 +80,17 @@ export class UserTypeOrmEntity {
   @OneToMany(() => ExamAttemptTypeOrmEntity, (attempt) => attempt.student)
   attempts!: ExamAttemptTypeOrmEntity[];
 
-  @OneToMany(
+  @OneToOne(
     () => CertificateTypeOrmEntity,
     (certificate) => certificate.student,
   )
-  certificates!: CertificateTypeOrmEntity[];
+  certificate?: CertificateTypeOrmEntity;
 
   @OneToMany(
     () => StudentMaterialAccessTypeOrmEntity,
     (materialAccess) => materialAccess.student,
   )
   materialAccesses!: StudentMaterialAccessTypeOrmEntity[];
-
-  @OneToMany(
-    () => StudentMaterialAccessTypeOrmEntity,
-    (materialAccess) => materialAccess.enabledBy,
-  )
-  materialAccessManaged!: StudentMaterialAccessTypeOrmEntity[];
 
   @OneToMany(
     () => StudentMaterialAssignmentTypeOrmEntity,

@@ -35,6 +35,10 @@ import { UpdateMaterialDto } from '../../application/dto/update-material.dto';
 import { ListMaterialCategoriesUseCase } from '../../application/use-cases/list-material-categories.use-case';
 import { CreateMaterialCategoryDto } from '../../application/dto/create-material-category.dto';
 import { CreateMaterialCategoryUseCase } from '../../application/use-cases/create-material-category.use-case';
+import { GetMaterialCategoryUseCase } from '../../application/use-cases/get-material-category.use-case';
+import { UpdateMaterialCategoryDto } from '../../application/dto/update-material-category.dto';
+import { UpdateMaterialCategoryUseCase } from '../../application/use-cases/update-material-category.use-case';
+import { DeleteMaterialCategoryUseCase } from '../../application/use-cases/delete-material-category.use-case';
 import { SetStudentMaterialAccessDto } from '../../application/dto/set-student-material-access.dto';
 import { SetStudentMaterialAccessUseCase } from '../../application/use-cases/set-student-material-access.use-case';
 import { SetMaterialViewedDto } from '../../application/dto/set-material-viewed.dto';
@@ -50,6 +54,9 @@ export class MaterialsController {
     private readonly listMaterialCategoriesUseCase: ListMaterialCategoriesUseCase,
     private readonly createMaterialUseCase: CreateMaterialUseCase,
     private readonly createMaterialCategoryUseCase: CreateMaterialCategoryUseCase,
+    private readonly getMaterialCategoryUseCase: GetMaterialCategoryUseCase,
+    private readonly updateMaterialCategoryUseCase: UpdateMaterialCategoryUseCase,
+    private readonly deleteMaterialCategoryUseCase: DeleteMaterialCategoryUseCase,
     private readonly updateMaterialUseCase: UpdateMaterialUseCase,
     private readonly deleteMaterialUseCase: DeleteMaterialUseCase,
     private readonly setStudentMaterialAccessUseCase: SetStudentMaterialAccessUseCase,
@@ -73,6 +80,17 @@ export class MaterialsController {
     return this.listMaterialCategoriesUseCase.execute();
   }
 
+  @ApiOperation({ summary: 'Get a material category by ID' })
+  @ApiParam({ name: 'id', description: 'Material category ID' })
+  @ApiResponse({ status: 200, type: MaterialCategoryResponseDto })
+  @ApiResponse({ status: 404, description: 'Material category not found' })
+  @Get('categories/:id')
+  async category(
+    @Param('id') id: string,
+  ): Promise<MaterialCategoryResponseDto> {
+    return this.getMaterialCategoryUseCase.execute(id);
+  }
+
   @ApiOperation({ summary: 'Create a new material (Admin only)' })
   @ApiResponse({ status: 201, type: MaterialResponseDto })
   @Post()
@@ -87,6 +105,10 @@ export class MaterialsController {
 
   @ApiOperation({ summary: 'Create a material category (Admin only)' })
   @ApiResponse({ status: 201, type: MaterialCategoryResponseDto })
+  @ApiResponse({
+    status: 409,
+    description: 'Material category key is already in use',
+  })
   @Post('categories')
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
@@ -94,6 +116,24 @@ export class MaterialsController {
     @Body() body: CreateMaterialCategoryDto,
   ): Promise<MaterialCategoryResponseDto> {
     return this.createMaterialCategoryUseCase.execute(body);
+  }
+
+  @ApiOperation({ summary: 'Update a material category (Admin only)' })
+  @ApiParam({ name: 'id', description: 'Material category ID' })
+  @ApiResponse({ status: 200, type: MaterialCategoryResponseDto })
+  @ApiResponse({ status: 404, description: 'Material category not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Material category key is already in use',
+  })
+  @Patch('categories/:id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async updateCategory(
+    @Param('id') id: string,
+    @Body() body: UpdateMaterialCategoryDto,
+  ): Promise<MaterialCategoryResponseDto> {
+    return this.updateMaterialCategoryUseCase.execute(id, body);
   }
 
   @ApiOperation({ summary: 'Update a material (Admin only)' })
@@ -163,6 +203,23 @@ export class MaterialsController {
     @Param('studentId') studentId: string,
   ): Promise<void> {
     await this.setMaterialViewedUseCase.execute(materialId, studentId, false);
+  }
+
+  @ApiOperation({ summary: 'Delete a material category (Admin only)' })
+  @ApiParam({ name: 'id', description: 'Material category ID' })
+  @ApiResponse({ status: 204 })
+  @ApiResponse({ status: 404, description: 'Material category not found' })
+  @ApiResponse({
+    status: 400,
+    description:
+      'Material category cannot be deleted while it has materials assigned',
+  })
+  @Delete('categories/:id')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @HttpCode(204)
+  async removeCategory(@Param('id') id: string): Promise<void> {
+    await this.deleteMaterialCategoryUseCase.execute(id);
   }
 
   @ApiOperation({ summary: 'Delete a material (Admin only)' })
