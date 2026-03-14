@@ -5,12 +5,14 @@ import { AttemptsController } from './presentation/http/attempts.controller';
 import { ListMyAttemptsUseCase } from './application/use-cases/list-my-attempts.use-case';
 import { ATTEMPT_READ_REPOSITORY } from './domain/ports/attempt-read-repository.port';
 import { TypeOrmAttemptReadRepository } from './infrastructure/persistence/typeorm-attempt-read.repository';
+import { GetMyAttemptDetailUseCase } from './application/use-cases/get-my-attempt-detail.use-case';
 
 @Module({
   imports: [TypeOrmModule.forFeature([ExamAttemptTypeOrmEntity])],
   controllers: [AttemptsController],
   providers: [
     ListMyAttemptsUseCase,
+    GetMyAttemptDetailUseCase,
     {
       provide: ATTEMPT_READ_REPOSITORY,
       useClass: TypeOrmAttemptReadRepository,

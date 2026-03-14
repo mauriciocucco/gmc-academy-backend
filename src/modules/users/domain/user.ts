@@ -9,5 +9,6 @@ export interface User {
   role: UserRole;
   passwordHash: string;
   refreshTokenHash: string | null;
+  mustChangePassword: boolean;
   createdAt: Date;
 }

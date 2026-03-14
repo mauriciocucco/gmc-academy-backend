@@ -13,12 +13,12 @@ import { CurrentUser } from '../../../../common/infrastructure/http/decorators/c
 import { JwtPayload } from '../../../../common/infrastructure/http/interfaces/jwt-payload.interface';
 import {
   GetLatestCertificateUseCase,
-  LatestCertificateResponseDto,
 } from '../../application/use-cases/get-latest-certificate.use-case';
 import {
   GenerateCertificatePdfUseCase,
   GeneratedCertificatePdfResponseDto,
 } from '../../application/use-cases/generate-certificate-pdf.use-case';
+import { LatestCertificateResponseDto } from '../../application/dto/latest-certificate-response.dto';
 
 @ApiTags('Certificates')
 @ApiBearerAuth('access-token')
@@ -32,20 +32,7 @@ export class CertificatesController {
   ) {}
 
   @ApiOperation({ summary: "Get current student's latest certificate" })
-  @ApiResponse({
-    status: 200,
-    schema: {
-      type: 'object',
-      properties: {
-        id: { type: 'string' },
-        certificateCode: { type: 'string' },
-        issuedAt: { type: 'string', format: 'date-time' },
-        pdfUrl: { type: 'string', nullable: true },
-        examTitle: { type: 'string' },
-        attemptScore: { type: 'number' },
-      },
-    },
-  })
+  @ApiResponse({ status: 200, type: LatestCertificateResponseDto })
   @ApiResponse({ status: 404, description: 'No certificate found' })
   @Get('me/latest')
   async latest(
@@ -55,16 +42,20 @@ export class CertificatesController {
   }
 
   @ApiOperation({
-    summary: "Generate or retrieve PDF for student's latest certificate",
+    summary:
+      "Generate or retrieve a temporary signed PDF URL for student's latest certificate",
   })
   @ApiResponse({
     status: 201,
-    description: 'Certificate ID and PDF URL',
+    description: 'Certificate ID and temporary signed PDF URL',
     schema: {
       type: 'object',
       properties: {
         certificateId: { type: 'string' },
-        pdfUrl: { type: 'string' },
+        pdfUrl: {
+          type: 'string',
+          description: 'Temporary signed download URL for the certificate PDF',
+        },
       },
     },
   })

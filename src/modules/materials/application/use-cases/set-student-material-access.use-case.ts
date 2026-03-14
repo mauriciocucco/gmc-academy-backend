@@ -22,7 +22,6 @@ export class SetStudentMaterialAccessUseCase {
   async execute(input: {
     materialId: string;
     studentId: string;
-    enabledById: string;
     dto: SetStudentMaterialAccessDto;
   }): Promise<void> {
     const material = await this.materialRepository.findById(input.materialId);
@@ -39,7 +38,6 @@ export class SetStudentMaterialAccessUseCase {
       materialId: input.materialId,
       studentId: input.studentId,
       enabled: input.dto.enabled,
-      enabledById: input.enabledById,
     });
   }
 }

@@ -1,4 +1,5 @@
 import {
+  Check,
   Column,
   Entity,
   Index,
@@ -12,6 +13,10 @@ import { MaterialLinkSource } from '../../../common/domain/enums/material-link-s
 @Entity('material_links')
 @Index('material_links_material_id_idx', ['materialId'])
 @Index('material_links_material_position_idx', ['materialId', 'position'])
+@Check(
+  'material_links_source_type_check',
+  `"source_type" IN ('drive', 'youtube', 'other')`,
+)
 export class MaterialLinkTypeOrmEntity {
   @PrimaryGeneratedColumn({
     type: 'bigint',
@@ -40,6 +45,9 @@ export class MaterialLinkTypeOrmEntity {
 
   @Column({ type: 'text' })
   url!: string;
+
+  @Column({ type: 'text' })
+  label!: string;
 
   @Column({ type: 'integer', default: 0 })
   position!: number;

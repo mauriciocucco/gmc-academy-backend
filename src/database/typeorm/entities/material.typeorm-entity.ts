@@ -11,6 +11,7 @@ import { UserTypeOrmEntity } from './user.typeorm-entity';
 import { MaterialCategoryTypeOrmEntity } from './material-category.typeorm-entity';
 import { MaterialLinkTypeOrmEntity } from './material-link.typeorm-entity';
 import { StudentMaterialAccessTypeOrmEntity } from './student-material-access.typeorm-entity';
+import { StudentMaterialAssignmentTypeOrmEntity } from './student-material-assignment.typeorm-entity';
 
 @Entity('materials')
 @Index('materials_created_by_idx', ['createdById'])
@@ -78,4 +79,10 @@ export class MaterialTypeOrmEntity {
     (studentAccess) => studentAccess.material,
   )
   studentAccesses!: StudentMaterialAccessTypeOrmEntity[];
+
+  @OneToMany(
+    () => StudentMaterialAssignmentTypeOrmEntity,
+    (studentAssignment) => studentAssignment.material,
+  )
+  studentAssignments!: StudentMaterialAssignmentTypeOrmEntity[];
 }

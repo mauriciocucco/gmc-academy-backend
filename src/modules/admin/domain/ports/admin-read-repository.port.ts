@@ -1,19 +1,36 @@
 export const ADMIN_READ_REPOSITORY = Symbol('ADMIN_READ_REPOSITORY');
 
-export type AdminStudentItem = {
+export type AdminStudentListItem = {
   id: string;
   fullName: string;
   email: string;
-  phone: string | null;
   lastAttemptScore: number | null;
   approved: boolean;
 };
 
+export type ListAdminStudentsFilters = {
+  page: number;
+  pageSize: number;
+  search?: string;
+  status: 'all' | 'approved' | 'pending';
+  attemptState: 'all' | 'with-attempt' | 'without-attempt';
+};
+
+export type AdminStudentListResult = {
+  items: AdminStudentListItem[];
+  meta: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+};
+
 export type AdminStats = {
   totalStudents: number;
-  totalAttempts: number;
-  approvedAttempts: number;
   approvedStudents: number;
+  approvalRate: number;
+  averageScore: number;
 };
 
 export type AdminPerformanceByExam = {
@@ -47,7 +64,9 @@ export type AdminPerformance = {
 };
 
 export interface AdminReadRepositoryPort {
-  listStudentsWithLatestAttempt(): Promise<AdminStudentItem[]>;
+  listStudentsWithLatestAttempt(
+    filters: ListAdminStudentsFilters,
+  ): Promise<AdminStudentListResult>;
   getStats(): Promise<AdminStats>;
   getPerformance(): Promise<AdminPerformance>;
 }

@@ -7,7 +7,7 @@ import { MaterialTypeOrmEntity } from '../typeorm/entities/material.typeorm-enti
 import { MaterialCategoryTypeOrmEntity } from '../typeorm/entities/material-category.typeorm-entity';
 import { MaterialLinkTypeOrmEntity } from '../typeorm/entities/material-link.typeorm-entity';
 import { MaterialLinkSource } from '../../common/domain/enums/material-link-source.enum';
-import { StudentMaterialAccessTypeOrmEntity } from '../typeorm/entities/student-material-access.typeorm-entity';
+import { StudentMaterialAssignmentTypeOrmEntity } from '../typeorm/entities/student-material-assignment.typeorm-entity';
 import { ExamTypeOrmEntity } from '../typeorm/entities/exam.typeorm-entity';
 import { ExamQuestionTypeOrmEntity } from '../typeorm/entities/exam-question.typeorm-entity';
 import { ExamAttemptTypeOrmEntity } from '../typeorm/entities/exam-attempt.typeorm-entity';
@@ -27,8 +27,8 @@ async function runSeed(): Promise<void> {
     const linkRepository = AppDataSource.getRepository(
       MaterialLinkTypeOrmEntity,
     );
-    const accessRepository = AppDataSource.getRepository(
-      StudentMaterialAccessTypeOrmEntity,
+    const assignmentRepository = AppDataSource.getRepository(
+      StudentMaterialAssignmentTypeOrmEntity,
     );
     const examRepository = AppDataSource.getRepository(ExamTypeOrmEntity);
     const questionRepository = AppDataSource.getRepository(
@@ -100,7 +100,11 @@ async function runSeed(): Promise<void> {
       title: string;
       description: string;
       categoryId: string;
-      links: Array<{ sourceType: MaterialLinkSource; url: string }>;
+      links: Array<{
+        sourceType: MaterialLinkSource;
+        url: string;
+        label: string;
+      }>;
     }): Promise<MaterialTypeOrmEntity> => {
       let material = await materialRepository.findOne({
         where: { title: payload.title },
@@ -127,27 +131,17 @@ async function runSeed(): Promise<void> {
               materialId: material.id,
               sourceType: link.sourceType,
               url: link.url,
+              label: link.label,
               position: index,
             }),
           ),
         );
       }
 
-      await accessRepository.upsert(
-        {
-          materialId: material.id,
-          studentId: student.id,
-          enabled: true,
-          enabledById: admin.id,
-          enabledAt: new Date(),
-        },
-        ['materialId', 'studentId'],
-      );
-
       return material;
     };
 
-    await ensureMaterial({
+    const roadSignsMaterial = await ensureMaterial({
       title: 'Road signs handbook',
       description: 'Core material for regulatory and preventive road signs.',
       categoryId: signsCategory.id,
@@ -155,15 +149,17 @@ async function runSeed(): Promise<void> {
         {
           sourceType: MaterialLinkSource.DRIVE,
           url: 'https://drive.google.com/file/d/1manual-senales-gmc/view',
+          label: 'Manual de senales en PDF',
         },
         {
           sourceType: MaterialLinkSource.YOUTUBE,
           url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          label: 'Video explicativo de senales',
         },
       ],
     });
 
-    await ensureMaterial({
+    const rightOfWayMaterial = await ensureMaterial({
       title: 'Right-of-way summary',
       description: 'Quick guide for intersections, roundabouts and avenues.',
       categoryId: theoryCategory.id,
@@ -171,11 +167,12 @@ async function runSeed(): Promise<void> {
         {
           sourceType: MaterialLinkSource.DRIVE,
           url: 'https://drive.google.com/file/d/1prioridad-paso-gmc/view',
+          label: 'Resumen de prioridad de paso',
         },
       ],
     });
 
-    await ensureMaterial({
+    const mockExamMaterial = await ensureMaterial({
       title: 'Mock exam pack 1',
       description: 'Question bank similar to municipal exam formats.',
       categoryId: mockCategory.id,
@@ -183,9 +180,31 @@ async function runSeed(): Promise<void> {
         {
           sourceType: MaterialLinkSource.DRIVE,
           url: 'https://drive.google.com/file/d/1simulacro-gmc-01/view',
+          label: 'Simulacro 1 en PDF',
         },
       ],
     });
+
+    await assignmentRepository.upsert(
+      [
+        {
+          materialId: roadSignsMaterial.id,
+          studentId: student.id,
+          position: 0,
+        },
+        {
+          materialId: rightOfWayMaterial.id,
+          studentId: student.id,
+          position: 1,
+        },
+        {
+          materialId: mockExamMaterial.id,
+          studentId: student.id,
+          position: 2,
+        },
+      ],
+      ['studentId', 'materialId'],
+    );
 
     let exam = await examRepository.findOne({ where: { isActive: true } });
     if (!exam) {
@@ -195,6 +214,7 @@ async function runSeed(): Promise<void> {
           description: 'Practice exam for driving license preparation',
           passScore: '70',
           isActive: true,
+          updatedById: admin.id,
         }),
       );
     }

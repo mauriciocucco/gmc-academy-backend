@@ -20,7 +20,7 @@ export class ListMaterialsUseCase {
     const materials =
       input.role === UserRole.ADMIN
         ? await this.materialRepository.findAll()
-        : await this.materialRepository.findEnabledForStudent(input.userId);
+        : await this.materialRepository.findAssignedToStudent(input.userId);
 
     return materials.map((material) => ({
       id: material.id,
@@ -41,6 +41,7 @@ export class ListMaterialsUseCase {
           id: link.id,
           sourceType: link.sourceType,
           url: link.url,
+          label: link.label,
           position: link.position,
         })),
     }));

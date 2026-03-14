@@ -59,6 +59,7 @@ export class UpdateMyProfileUseCase {
       phone: updatedUser.phone,
       profilePhotoUrl: updatedUser.profilePhotoUrl,
       role: updatedUser.role,
+      mustChangePassword: updatedUser.mustChangePassword,
     };
   }
 }

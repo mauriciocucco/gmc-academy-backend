@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import {
   CreateMaterialPayload,
   MaterialRepositoryPort,
@@ -11,6 +11,7 @@ import { MaterialTypeOrmEntity } from '../../../../database/typeorm/entities/mat
 import { MaterialCategoryTypeOrmEntity } from '../../../../database/typeorm/entities/material-category.typeorm-entity';
 import { MaterialLinkTypeOrmEntity } from '../../../../database/typeorm/entities/material-link.typeorm-entity';
 import { StudentMaterialAccessTypeOrmEntity } from '../../../../database/typeorm/entities/student-material-access.typeorm-entity';
+import { StudentMaterialAssignmentTypeOrmEntity } from '../../../../database/typeorm/entities/student-material-assignment.typeorm-entity';
 
 @Injectable()
 export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
@@ -24,6 +25,8 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
     private readonly linkRepository: Repository<MaterialLinkTypeOrmEntity>,
     @InjectRepository(StudentMaterialAccessTypeOrmEntity)
     private readonly accessRepository: Repository<StudentMaterialAccessTypeOrmEntity>,
+    @InjectRepository(StudentMaterialAssignmentTypeOrmEntity)
+    private readonly assignmentRepository: Repository<StudentMaterialAssignmentTypeOrmEntity>,
   ) {}
 
   async findAll(): Promise<Material[]> {
@@ -40,24 +43,31 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
     return entities.map((entity) => this.toDomain(entity, null));
   }
 
-  async findEnabledForStudent(studentId: string): Promise<Material[]> {
+  async findAssignedToStudent(studentId: string): Promise<Material[]> {
     const rows = await this.materialRepository
       .createQueryBuilder('material')
       .leftJoinAndSelect('material.category', 'category')
       .leftJoinAndSelect('material.links', 'link')
       .innerJoin(
+        'material.studentAssignments',
+        'student_assignment',
+        'student_assignment.student_id = :studentId',
+        { studentId },
+      )
+      .leftJoin(
         'material.studentAccesses',
         'student_access',
-        'student_access.student_id = :studentId AND student_access.enabled = true',
+        'student_access.student_id = :studentId',
         { studentId },
       )
       .addSelect('student_access.viewed_at', 'student_access_viewed_at')
+      .addSelect('student_assignment.position', 'student_assignment_position')
       .where('material.published = true')
-      .orderBy('material.created_at', 'DESC')
+      .orderBy('student_assignment.position', 'ASC')
       .addOrderBy('link.position', 'ASC')
       .getRawAndEntities();
 
-    return rows.entities.map((entity, index) => {
+    return rows.entities.map((entity) => {
       const raw = rows.raw.find((r) => r.material_id === entity.id);
       const viewedAt: string | null = raw?.student_access_viewed_at ?? null;
       return this.toDomain(entity, viewedAt !== null);
@@ -76,6 +86,24 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
     });
 
     return entity ? this.toDomain(entity, null) : null;
+  }
+
+  async findByIds(ids: string[]): Promise<Material[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const entities = await this.materialRepository.find({
+      where: { id: In(ids) },
+      relations: ['category', 'links'],
+      order: {
+        links: {
+          position: 'ASC',
+        },
+      },
+    });
+
+    return entities.map((entity) => this.toDomain(entity, null));
   }
 
   async create(payload: CreateMaterialPayload): Promise<Material> {
@@ -107,6 +135,7 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
             materialId: savedMaterial.id,
             sourceType: link.sourceType,
             url: link.url,
+            label: link.label,
             position: link.position,
           }),
         );
@@ -169,6 +198,7 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
                 materialId: id,
                 sourceType: link.sourceType,
                 url: link.url,
+                label: link.label,
                 position: link.position,
               }),
             ),
@@ -217,28 +247,121 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
     };
   }
 
+  async listStudentAssignments(
+    studentId: string,
+  ): Promise<Array<{ materialId: string; position: number }>> {
+    const assignments = await this.assignmentRepository.find({
+      where: { studentId },
+      order: { position: 'ASC' },
+    });
+
+    return assignments.map((assignment) => ({
+      materialId: assignment.materialId,
+      position: assignment.position,
+    }));
+  }
+
+  async replaceStudentAssignments(payload: {
+    studentId: string;
+    assignments: Array<{ materialId: string; position: number }>;
+  }): Promise<Array<{ materialId: string; position: number }>> {
+    return this.dataSource.transaction(async (manager) => {
+      const assignmentRepository = manager.getRepository(
+        StudentMaterialAssignmentTypeOrmEntity,
+      );
+
+      await assignmentRepository.delete({ studentId: payload.studentId });
+
+      if (payload.assignments.length > 0) {
+        await assignmentRepository.insert(
+          payload.assignments.map((assignment) => ({
+            studentId: payload.studentId,
+            materialId: assignment.materialId,
+            position: assignment.position,
+          })),
+        );
+      }
+
+      const saved = await assignmentRepository.find({
+        where: { studentId: payload.studentId },
+        order: { position: 'ASC' },
+      });
+
+      return saved.map((assignment) => ({
+        materialId: assignment.materialId,
+        position: assignment.position,
+      }));
+    });
+  }
+
   async setStudentAccess(payload: {
     materialId: string;
     studentId: string;
     enabled: boolean;
-    enabledById: string;
   }): Promise<void> {
-    await this.accessRepository.upsert(
-      {
+    await this.dataSource.transaction(async (manager) => {
+      const assignmentRepository = manager.getRepository(
+        StudentMaterialAssignmentTypeOrmEntity,
+      );
+
+      if (!payload.enabled) {
+        await assignmentRepository.delete({
+          materialId: payload.materialId,
+          studentId: payload.studentId,
+        });
+        return;
+      }
+
+      const existing = await assignmentRepository.findOne({
+        where: {
+          materialId: payload.materialId,
+          studentId: payload.studentId,
+        },
+      });
+      if (existing) {
+        return;
+      }
+
+      const rawMaxPosition = await assignmentRepository
+        .createQueryBuilder('assignment')
+        .select('COALESCE(MAX(assignment.position), -1)', 'maxPosition')
+        .where('assignment.student_id = :studentId', {
+          studentId: payload.studentId,
+        })
+        .getRawOne<{ maxPosition: string }>();
+
+      await assignmentRepository.insert({
         materialId: payload.materialId,
         studentId: payload.studentId,
-        enabled: payload.enabled,
-        enabledById: payload.enabledById,
-        enabledAt: payload.enabled ? new Date() : null,
-      },
-      ['materialId', 'studentId'],
-    );
+        position: Number(rawMaxPosition?.maxPosition ?? -1) + 1,
+      });
+    });
+  }
+
+  async hasStudentAccessToMaterial(
+    materialId: string,
+    studentId: string,
+  ): Promise<boolean> {
+    const count = await this.assignmentRepository
+      .createQueryBuilder('assignment')
+      .innerJoin('assignment.material', 'material')
+      .where('assignment.student_id = :studentId', { studentId })
+      .andWhere('assignment.material_id = :materialId', { materialId })
+      .andWhere('material.published = true')
+      .getCount();
+
+    return count > 0;
   }
 
   async markAsViewed(materialId: string, studentId: string): Promise<void> {
-    await this.accessRepository.update(
-      { materialId, studentId, enabled: true },
-      { viewedAt: () => 'COALESCE(viewed_at, now())' },
+    await this.accessRepository.query(
+      `
+        INSERT INTO student_material_access (material_id, student_id, viewed_at)
+        VALUES ($1, $2, now())
+        ON CONFLICT (material_id, student_id)
+        DO UPDATE SET viewed_at = COALESCE(student_material_access.viewed_at, EXCLUDED.viewed_at);
+      `,
+      [materialId, studentId],
     );
   }
 
@@ -254,15 +377,21 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
       .execute();
   }
 
-  async countEnabledAndViewedForStudent(
+  async countAssignedAndViewedForStudent(
     studentId: string,
   ): Promise<{ total: number; viewed: number }> {
-    const result = await this.accessRepository
-      .createQueryBuilder('a')
+    const result = await this.assignmentRepository
+      .createQueryBuilder('assignment')
       .select('COUNT(*)', 'total')
-      .addSelect('COUNT(a.viewed_at)', 'viewed')
-      .where('a.student_id = :studentId', { studentId })
-      .andWhere('a.enabled = true')
+      .addSelect('COUNT(access.viewed_at)', 'viewed')
+      .innerJoin('assignment.material', 'material')
+      .leftJoin(
+        StudentMaterialAccessTypeOrmEntity,
+        'access',
+        'access.student_id = assignment.student_id AND access.material_id = assignment.material_id',
+      )
+      .where('assignment.student_id = :studentId', { studentId })
+      .andWhere('material.published = true')
       .getRawOne<{ total: string; viewed: string }>();
 
     return {
@@ -290,6 +419,7 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
         id: link.id,
         sourceType: link.sourceType,
         url: link.url,
+        label: link.label,
         position: link.position,
       })),
       createdById: entity.createdById,

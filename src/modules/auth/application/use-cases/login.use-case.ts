@@ -61,6 +61,7 @@ export class LoginUseCase {
         phone: user.phone,
         profilePhotoUrl: user.profilePhotoUrl,
         role: user.role,
+        mustChangePassword: user.mustChangePassword,
       },
     };
   }

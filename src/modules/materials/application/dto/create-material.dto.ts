@@ -24,6 +24,11 @@ export class MaterialLinkInputDto {
   @IsUrl({ require_tld: false })
   url!: string;
 
+  @ApiProperty({ example: 'Manual teorico en PDF', minLength: 1, maxLength: 120 })
+  @IsString()
+  @Length(1, 120)
+  label!: string;
+
   @ApiPropertyOptional({ minimum: 0 })
   @IsOptional()
   @Type(() => Number)

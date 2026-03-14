@@ -7,6 +7,10 @@ const YOUTUBE_REGEX = /(youtube\.com|youtu\.be)/i;
 
 export function validateMaterialLinks(links: MaterialLinkInputDto[]): void {
   for (const link of links) {
+    if (link.label.trim().length === 0) {
+      throw new BadRequestException('Material link label cannot be empty');
+    }
+
     if (
       link.sourceType === MaterialLinkSource.DRIVE &&
       !DRIVE_REGEX.test(link.url)

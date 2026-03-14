@@ -12,9 +12,16 @@ export interface UserRepositoryPort {
     profilePhotoUrl?: string | null;
     passwordHash: string;
     role: User['role'];
+    mustChangePassword?: boolean;
   }): Promise<User>;
   saveRefreshTokenHash(userId: string, refreshTokenHash: string): Promise<void>;
   clearRefreshTokenHash(userId: string): Promise<void>;
+  updatePassword(payload: {
+    userId: string;
+    passwordHash: string;
+    mustChangePassword: boolean;
+    clearRefreshTokenHash?: boolean;
+  }): Promise<User>;
   updateProfile(payload: {
     userId: string;
     fullName?: string;

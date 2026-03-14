@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserTypeOrmEntity } from '../../database/typeorm/entities/user.typeorm-entity';
 import { StudentMaterialAccessTypeOrmEntity } from '../../database/typeorm/entities/student-material-access.typeorm-entity';
+import { StudentMaterialAssignmentTypeOrmEntity } from '../../database/typeorm/entities/student-material-assignment.typeorm-entity';
 import { ExamAttemptTypeOrmEntity } from '../../database/typeorm/entities/exam-attempt.typeorm-entity';
 import { CertificateTypeOrmEntity } from '../../database/typeorm/entities/certificate.typeorm-entity';
 import { USER_REPOSITORY } from './domain/ports/user-repository.port';
@@ -15,12 +16,16 @@ import { UploadMyProfilePhotoUseCase } from './application/use-cases/upload-my-p
 import { UsersController } from './presentation/http/users.controller';
 import { PROFILE_PHOTO_STORAGE } from './domain/ports/profile-photo-storage.port';
 import { CloudinaryProfilePhotoStorageAdapter } from './infrastructure/storage/cloudinary-profile-photo-storage.adapter';
+import { PASSWORD_HASHER } from '../auth/domain/ports/password-hasher.port';
+import { BcryptPasswordHasherAdapter } from '../auth/infrastructure/security/bcrypt-password-hasher.adapter';
+import { ChangeMyPasswordUseCase } from './application/use-cases/change-my-password.use-case';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       UserTypeOrmEntity,
       StudentMaterialAccessTypeOrmEntity,
+      StudentMaterialAssignmentTypeOrmEntity,
       ExamAttemptTypeOrmEntity,
       CertificateTypeOrmEntity,
     ]),
@@ -31,6 +36,7 @@ import { CloudinaryProfilePhotoStorageAdapter } from './infrastructure/storage/c
     GetMyProgressUseCase,
     UpdateMyProfileUseCase,
     UploadMyProfilePhotoUseCase,
+    ChangeMyPasswordUseCase,
     {
       provide: USER_REPOSITORY,
       useClass: TypeOrmUserRepository,
@@ -38,6 +44,10 @@ import { CloudinaryProfilePhotoStorageAdapter } from './infrastructure/storage/c
     {
       provide: PROFILE_PHOTO_STORAGE,
       useClass: CloudinaryProfilePhotoStorageAdapter,
+    },
+    {
+      provide: PASSWORD_HASHER,
+      useClass: BcryptPasswordHasherAdapter,
     },
     {
       provide: PROGRESS_REPOSITORY,

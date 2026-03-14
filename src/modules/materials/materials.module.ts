@@ -4,6 +4,7 @@ import { MaterialTypeOrmEntity } from '../../database/typeorm/entities/material.
 import { MaterialCategoryTypeOrmEntity } from '../../database/typeorm/entities/material-category.typeorm-entity';
 import { MaterialLinkTypeOrmEntity } from '../../database/typeorm/entities/material-link.typeorm-entity';
 import { StudentMaterialAccessTypeOrmEntity } from '../../database/typeorm/entities/student-material-access.typeorm-entity';
+import { StudentMaterialAssignmentTypeOrmEntity } from '../../database/typeorm/entities/student-material-assignment.typeorm-entity';
 import { MaterialsController } from './presentation/http/materials.controller';
 import { MATERIAL_REPOSITORY } from './domain/ports/material-repository.port';
 import { TypeOrmMaterialRepository } from './infrastructure/persistence/typeorm-material.repository';
@@ -25,6 +26,7 @@ import { UsersModule } from '../users/users.module';
       MaterialCategoryTypeOrmEntity,
       MaterialLinkTypeOrmEntity,
       StudentMaterialAccessTypeOrmEntity,
+      StudentMaterialAssignmentTypeOrmEntity,
     ]),
   ],
   controllers: [MaterialsController],
@@ -42,5 +44,6 @@ import { UsersModule } from '../users/users.module';
       useClass: TypeOrmMaterialRepository,
     },
   ],
+  exports: [MATERIAL_REPOSITORY],
 })
 export class MaterialsModule {}

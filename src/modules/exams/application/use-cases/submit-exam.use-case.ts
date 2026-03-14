@@ -65,6 +65,21 @@ export class SubmitExamUseCase {
     const rawScore = (correctAnswers / exam.questions.length) * 100;
     const score = Math.round(rawScore * 100) / 100;
     const passed = score >= exam.passScore;
+    const review = exam.questions.map((question) => {
+      const selectedOptionId = answerByQuestion.get(question.id) ?? null;
+      return {
+        questionId: question.id,
+        questionText: question.questionText,
+        position: question.position,
+        options: question.options.map((option) => ({
+          id: option.id,
+          label: option.label,
+        })),
+        selectedOptionId,
+        correctOptionId: question.correctOption,
+        isCorrect: selectedOptionId === question.correctOption,
+      };
+    });
 
     const persisted =
       await this.examAttemptRepository.createAttemptWithCertificate({
@@ -73,6 +88,7 @@ export class SubmitExamUseCase {
         score,
         passed,
         answers: dto.answers,
+        review,
       });
 
     return {

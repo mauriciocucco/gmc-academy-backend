@@ -34,11 +34,10 @@ export class CloudinaryFileStorageAdapter implements FileStoragePort {
       const upload = cloudinary.uploader.upload_stream(
         {
           folder: this.configService.get<string>('CLOUDINARY_FOLDER'),
-          public_id: payload.fileName.replace(/\.pdf$/i, ''),
+          public_id: payload.fileName,
           resource_type: 'raw',
-          format: 'pdf',
-          use_filename: true,
-          unique_filename: true,
+          use_filename: false,
+          unique_filename: false,
           invalidate: true,
         },
         (error, result) => {
@@ -57,5 +56,47 @@ export class CloudinaryFileStorageAdapter implements FileStoragePort {
 
       Readable.from(payload.buffer).pipe(upload);
     });
+  }
+
+  getDownloadUrl(fileUrl: string): string {
+    const publicId = this.extractPublicId(fileUrl);
+    if (!publicId) {
+      return fileUrl;
+    }
+
+    const expiresAt =
+      Math.floor(Date.now() / 1000) +
+      this.getCertificateUrlTtlInSeconds();
+
+    return cloudinary.utils.private_download_url(publicId, 'pdf', {
+      resource_type: 'raw',
+      type: 'upload',
+      expires_at: expiresAt,
+    });
+  }
+
+  private getCertificateUrlTtlInSeconds(): number {
+    const configuredTtl = this.configService.get<string>(
+      'CERTIFICATE_PDF_URL_TTL_SECONDS',
+    );
+    const ttl = Number(configuredTtl);
+
+    if (!Number.isFinite(ttl) || ttl <= 0) {
+      return 900;
+    }
+
+    return Math.floor(ttl);
+  }
+
+  private extractPublicId(fileUrl: string): string | null {
+    try {
+      const { pathname } = new URL(fileUrl);
+      const normalizedPath = decodeURIComponent(pathname);
+      const match = normalizedPath.match(/\/raw\/upload\/(?:v\d+\/)?(.+)$/i);
+
+      return match?.[1] ?? null;
+    } catch {
+      return null;
+    }
   }
 }

@@ -10,6 +10,7 @@ export interface MaterialLink {
   id: string;
   sourceType: MaterialLinkSource;
   url: string;
+  label: string;
   position: number;
 }
 

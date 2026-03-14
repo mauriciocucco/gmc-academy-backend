@@ -67,10 +67,10 @@ export class CreateExamDto {
   @Length(3, 500)
   description!: string;
 
-  @ApiProperty({ example: 70, minimum: 0, maximum: 100 })
+  @ApiProperty({ example: 70, minimum: 1, maximum: 100 })
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @Min(1)
   @Max(100)
   passScore!: number;
 
@@ -100,11 +100,11 @@ export class UpdateExamDto {
   @Length(3, 500)
   description?: string;
 
-  @ApiPropertyOptional({ minimum: 0, maximum: 100 })
+  @ApiPropertyOptional({ minimum: 1, maximum: 100 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @Min(1)
   @Max(100)
   passScore?: number;
 

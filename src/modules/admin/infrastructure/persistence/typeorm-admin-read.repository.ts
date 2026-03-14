@@ -1,83 +1,138 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import {
+  AdminStudentListResult,
+  AdminStudentListItem,
   AdminPerformance,
   AdminPerformanceByExam,
   AdminPerformanceByStudent,
   AdminReadRepositoryPort,
   AdminStats,
-  AdminStudentItem,
+  ListAdminStudentsFilters,
 } from '../../domain/ports/admin-read-repository.port';
 
 @Injectable()
 export class TypeOrmAdminReadRepository implements AdminReadRepositoryPort {
   constructor(private readonly dataSource: DataSource) {}
 
-  async listStudentsWithLatestAttempt(): Promise<AdminStudentItem[]> {
+  async listStudentsWithLatestAttempt(
+    filters: ListAdminStudentsFilters,
+  ): Promise<AdminStudentListResult> {
+    const search =
+      filters.search && filters.search.trim().length > 0
+        ? `%${filters.search.trim().toLowerCase()}%`
+        : null;
+    const offset = (filters.page - 1) * filters.pageSize;
+
     const rows = await this.dataSource.query<
       Array<{
         id: string;
         full_name: string;
         email: string;
-        phone: string | null;
+        latest_attempt_id: string | null;
         last_score: string | null;
         approved: boolean | null;
+        total_count: string;
       }>
     >(
       `
       SELECT
-        u.id::text AS id,
-        u.full_name,
-        u.email,
-        u.phone,
-        latest.score::text AS last_score,
-        latest.passed AS approved
-      FROM users u
-      LEFT JOIN LATERAL (
-        SELECT ea.score, ea.passed
-        FROM exam_attempts ea
-        WHERE ea.student_id = u.id
-        ORDER BY ea.created_at DESC
-        LIMIT 1
-      ) latest ON true
-      WHERE u.role = 'student'
-      ORDER BY u.full_name ASC;
+        filtered.id,
+        filtered.full_name,
+        filtered.email,
+        filtered.latest_attempt_id,
+        filtered.last_score,
+        filtered.approved,
+        COUNT(*) OVER()::text AS total_count
+      FROM (
+        SELECT
+          u.id::text AS id,
+          u.full_name,
+          u.email,
+          latest.id::text AS latest_attempt_id,
+          latest.score::text AS last_score,
+          latest.passed AS approved
+        FROM users u
+        LEFT JOIN LATERAL (
+          SELECT ea.id, ea.score, ea.passed
+          FROM exam_attempts ea
+          WHERE ea.student_id = u.id
+          ORDER BY ea.created_at DESC
+          LIMIT 1
+        ) latest ON true
+        WHERE u.role = 'student'
+          AND ($1::text IS NULL OR LOWER(u.full_name) LIKE $1 OR LOWER(u.email) LIKE $1)
+          AND (
+            $2::text = 'all'
+            OR ($2::text = 'approved' AND latest.passed = true)
+            OR ($2::text = 'pending' AND COALESCE(latest.passed, false) = false)
+          )
+          AND (
+            $3::text = 'all'
+            OR ($3::text = 'with-attempt' AND latest.id IS NOT NULL)
+            OR ($3::text = 'without-attempt' AND latest.id IS NULL)
+          )
+      ) filtered
+      ORDER BY filtered.full_name ASC, filtered.id ASC
+      OFFSET $4
+      LIMIT $5;
       `,
+      [search, filters.status, filters.attemptState, offset, filters.pageSize],
     );
 
-    return rows.map((row) => ({
-      id: row.id,
-      fullName: row.full_name,
-      email: row.email,
-      phone: row.phone,
-      lastAttemptScore: row.last_score ? Number(row.last_score) : null,
-      approved: row.approved ?? false,
-    }));
+    const items = rows.map(
+      (row): AdminStudentListItem => ({
+        id: row.id,
+        fullName: row.full_name,
+        email: row.email,
+        lastAttemptScore: row.last_score ? Number(row.last_score) : null,
+        approved: row.approved ?? false,
+      }),
+    );
+
+    const totalItems = Number(rows[0]?.total_count ?? 0);
+
+    return {
+      items,
+      meta: {
+        page: filters.page,
+        pageSize: filters.pageSize,
+        totalItems,
+        totalPages:
+          totalItems === 0 ? 0 : Math.ceil(totalItems / filters.pageSize),
+      },
+    };
   }
 
   async getStats(): Promise<AdminStats> {
     const [stats] = await this.dataSource.query<
       Array<{
         total_students: string;
-        total_attempts: string;
-        approved_attempts: string;
         approved_students: string;
+        approval_rate: string;
+        average_score: string;
       }>
     >(
       `
       SELECT
         (SELECT COUNT(*) FROM users WHERE role = 'student')::text AS total_students,
-        (SELECT COUNT(*) FROM exam_attempts)::text AS total_attempts,
-        (SELECT COUNT(*) FROM exam_attempts WHERE passed = true)::text AS approved_attempts,
-        (SELECT COUNT(DISTINCT student_id) FROM exam_attempts WHERE passed = true)::text AS approved_students;
+        (SELECT COUNT(DISTINCT student_id) FROM exam_attempts WHERE passed = true)::text AS approved_students,
+        COALESCE(
+          (
+            (SELECT COUNT(DISTINCT student_id) FROM exam_attempts WHERE passed = true)::numeric
+            / NULLIF((SELECT COUNT(*) FROM users WHERE role = 'student'), 0)
+          ) * 100,
+          0
+        )::text AS approval_rate,
+        (SELECT COALESCE(AVG(score), 0) FROM exam_attempts)::text AS average_score;
       `,
     );
 
     return {
       totalStudents: Number(stats?.total_students ?? 0),
-      totalAttempts: Number(stats?.total_attempts ?? 0),
-      approvedAttempts: Number(stats?.approved_attempts ?? 0),
       approvedStudents: Number(stats?.approved_students ?? 0),
+      approvalRate: Number(stats?.approval_rate ?? 0),
+      averageScore: Number(stats?.average_score ?? 0),
     };
   }
 

@@ -14,7 +14,10 @@ export class CreateExamUseCase {
     private readonly examManagementRepository: ExamManagementRepositoryPort,
   ) {}
 
-  async execute(dto: CreateExamDto): Promise<ExamDetailResponseDto> {
+  async execute(
+    dto: CreateExamDto,
+    adminId?: string,
+  ): Promise<ExamDetailResponseDto> {
     validateExamQuestions(dto.questions);
 
     const exam = await this.examManagementRepository.create({
@@ -22,6 +25,7 @@ export class CreateExamUseCase {
       description: dto.description.trim(),
       passScore: dto.passScore,
       isActive: dto.isActive ?? false,
+      updatedById: adminId,
       questions: dto.questions.map((question, index) => ({
         questionText: question.questionText.trim(),
         options: question.options.map((option) => ({

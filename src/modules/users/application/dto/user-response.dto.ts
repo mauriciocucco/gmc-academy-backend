@@ -22,4 +22,7 @@ export class UserResponseDto {
 
   @ApiProperty({ enum: UserRole })
   role!: UserRole;
+
+  @ApiProperty()
+  mustChangePassword!: boolean;
 }

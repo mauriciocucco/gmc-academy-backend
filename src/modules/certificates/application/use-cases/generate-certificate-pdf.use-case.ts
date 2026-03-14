@@ -62,23 +62,26 @@ export class GenerateCertificatePdfUseCase {
     if (certificate.pdfUrl) {
       return {
         certificateId: certificate.id,
-        pdfUrl: certificate.pdfUrl,
+        pdfUrl: this.fileStorage.getDownloadUrl(certificate.pdfUrl),
       };
     }
 
     const pdfBuffer =
       await this.certificateDocumentBuilder.buildPdf(certificate);
-    const pdfUrl = await this.fileStorage.uploadBuffer({
+    const storedPdfUrl = await this.fileStorage.uploadBuffer({
       buffer: pdfBuffer,
       fileName: `${certificate.certificateCode}.pdf`,
       mimeType: 'application/pdf',
     });
 
-    await this.certificatePdfRepository.updatePdfUrl(certificate.id, pdfUrl);
+    await this.certificatePdfRepository.updatePdfUrl(
+      certificate.id,
+      storedPdfUrl,
+    );
 
     return {
       certificateId: certificate.id,
-      pdfUrl,
+      pdfUrl: this.fileStorage.getDownloadUrl(storedPdfUrl),
     };
   }
 }

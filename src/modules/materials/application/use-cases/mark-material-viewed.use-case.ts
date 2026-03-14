@@ -22,9 +22,10 @@ export class MarkMaterialViewedUseCase {
       throw new NotFoundException('Material not found');
     }
 
-    const enabled =
-      await this.materialRepository.findEnabledForStudent(studentId);
-    const hasAccess = enabled.some((m) => m.id === materialId);
+    const hasAccess = await this.materialRepository.hasStudentAccessToMaterial(
+      materialId,
+      studentId,
+    );
     if (!hasAccess) {
       throw new ForbiddenException('Access to this material is not enabled');
     }

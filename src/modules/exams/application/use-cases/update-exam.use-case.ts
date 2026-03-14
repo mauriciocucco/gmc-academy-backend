@@ -17,6 +17,7 @@ export class UpdateExamUseCase {
   async execute(
     examId: string,
     dto: UpdateExamDto,
+    adminId?: string,
   ): Promise<ExamDetailResponseDto> {
     if (dto.questions) {
       validateExamQuestions(dto.questions);
@@ -27,6 +28,7 @@ export class UpdateExamUseCase {
       description: dto.description?.trim(),
       passScore: dto.passScore,
       isActive: dto.isActive,
+      updatedById: adminId,
       questions: dto.questions?.map((question, index) => ({
         questionText: question.questionText.trim(),
         options: question.options.map((option) => ({

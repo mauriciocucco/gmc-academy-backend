@@ -35,6 +35,8 @@ import { StudentProgressResponseDto } from '../../application/dto/student-progre
 import { UserRole } from '../../../../common/domain/enums/user-role.enum';
 import { UpdateMyProfileDto } from '../../application/dto/update-my-profile.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ChangeMyPasswordDto } from '../../application/dto/change-my-password.dto';
+import { ChangeMyPasswordUseCase } from '../../application/use-cases/change-my-password.use-case';
 
 @ApiTags('Users')
 @ApiBearerAuth('access-token')
@@ -45,6 +47,7 @@ export class UsersController {
     private readonly getMyProgressUseCase: GetMyProgressUseCase,
     private readonly updateMyProfileUseCase: UpdateMyProfileUseCase,
     private readonly uploadMyProfilePhotoUseCase: UploadMyProfilePhotoUseCase,
+    private readonly changeMyPasswordUseCase: ChangeMyPasswordUseCase,
   ) {}
 
   @ApiOperation({ summary: 'Get current authenticated user profile' })
@@ -65,6 +68,18 @@ export class UsersController {
     @Body() body: UpdateMyProfileDto,
   ): Promise<UserResponseDto> {
     return this.updateMyProfileUseCase.execute(user.sub, body);
+  }
+
+  @ApiOperation({ summary: 'Change current student password' })
+  @ApiResponse({ status: 200, type: UserResponseDto })
+  @Patch('me/password')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.STUDENT)
+  async changeMyPassword(
+    @CurrentUser() user: JwtPayload,
+    @Body() body: ChangeMyPasswordDto,
+  ): Promise<UserResponseDto> {
+    return this.changeMyPasswordUseCase.execute(user.sub, body);
   }
 
   @ApiOperation({ summary: 'Upload current student profile photo' })

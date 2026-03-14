@@ -22,6 +22,9 @@ class AuthSessionUserDto {
 
   @ApiProperty({ enum: UserRole })
   role!: UserRole;
+
+  @ApiProperty()
+  mustChangePassword!: boolean;
 }
 
 export class AuthSessionDto {

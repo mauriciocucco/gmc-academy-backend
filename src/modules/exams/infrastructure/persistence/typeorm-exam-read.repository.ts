@@ -15,8 +15,9 @@ export class TypeOrmExamReadRepository implements ExamReadRepositoryPort {
   async findActive(): Promise<Exam | null> {
     const entity = await this.repository.findOne({
       where: { isActive: true },
-      relations: ['questions'],
+      relations: ['questions', 'updatedBy'],
       order: {
+        updatedAt: 'DESC',
         createdAt: 'DESC',
         questions: {
           position: 'ASC',
@@ -29,8 +30,9 @@ export class TypeOrmExamReadRepository implements ExamReadRepositoryPort {
   async findActiveMany(): Promise<Exam[]> {
     const entities = await this.repository.find({
       where: { isActive: true },
-      relations: ['questions'],
+      relations: ['questions', 'updatedBy'],
       order: {
+        updatedAt: 'DESC',
         createdAt: 'DESC',
         questions: {
           position: 'ASC',
@@ -43,7 +45,7 @@ export class TypeOrmExamReadRepository implements ExamReadRepositoryPort {
   async findById(id: string): Promise<Exam | null> {
     const entity = await this.repository.findOne({
       where: { id },
-      relations: ['questions'],
+      relations: ['questions', 'updatedBy'],
       order: {
         questions: {
           position: 'ASC',
@@ -61,6 +63,8 @@ export class TypeOrmExamReadRepository implements ExamReadRepositoryPort {
       passScore: Number(entity.passScore),
       isActive: entity.isActive,
       createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+      updatedByName: entity.updatedBy?.fullName ?? null,
       questions: entity.questions.map((question) => ({
         id: question.id,
         questionText: question.questionText,

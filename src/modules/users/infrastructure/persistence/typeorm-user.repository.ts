@@ -31,6 +31,7 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
     profilePhotoUrl?: string | null;
     passwordHash: string;
     role: User['role'];
+    mustChangePassword?: boolean;
   }): Promise<User> {
     const entity = this.repository.create({
       email: payload.email.toLowerCase().trim(),
@@ -39,6 +40,7 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
       profilePhotoUrl: payload.profilePhotoUrl ?? null,
       passwordHash: payload.passwordHash,
       role: payload.role,
+      mustChangePassword: payload.mustChangePassword ?? false,
     });
     const saved = await this.repository.save(entity);
     return this.toDomain(saved);
@@ -53,6 +55,26 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
 
   async clearRefreshTokenHash(userId: string): Promise<void> {
     await this.repository.update({ id: userId }, { refreshTokenHash: null });
+  }
+
+  async updatePassword(payload: {
+    userId: string;
+    passwordHash: string;
+    mustChangePassword: boolean;
+    clearRefreshTokenHash?: boolean;
+  }): Promise<User> {
+    await this.repository.update(
+      { id: payload.userId },
+      {
+        passwordHash: payload.passwordHash,
+        mustChangePassword: payload.mustChangePassword,
+        refreshTokenHash: payload.clearRefreshTokenHash ? null : undefined,
+      },
+    );
+    const updated = await this.repository.findOne({
+      where: { id: payload.userId },
+    });
+    return this.toDomain(updated as UserTypeOrmEntity);
   }
 
   async updateProfile(payload: {
@@ -94,6 +116,7 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
       role: entity.role,
       passwordHash: entity.passwordHash,
       refreshTokenHash: entity.refreshTokenHash,
+      mustChangePassword: entity.mustChangePassword,
       createdAt: entity.createdAt,
     };
   }

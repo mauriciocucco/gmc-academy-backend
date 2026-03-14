@@ -2,7 +2,8 @@ import { Inject, Injectable } from '@nestjs/common';
 import {
   ADMIN_READ_REPOSITORY,
   AdminReadRepositoryPort,
-  AdminStudentItem,
+  AdminStudentListResult,
+  ListAdminStudentsFilters,
 } from '../../domain/ports/admin-read-repository.port';
 
 @Injectable()
@@ -12,7 +13,9 @@ export class ListAdminStudentsUseCase {
     private readonly adminReadRepository: AdminReadRepositoryPort,
   ) {}
 
-  async execute(): Promise<AdminStudentItem[]> {
-    return this.adminReadRepository.listStudentsWithLatestAttempt();
+  async execute(
+    filters: ListAdminStudentsFilters,
+  ): Promise<AdminStudentListResult> {
+    return this.adminReadRepository.listStudentsWithLatestAttempt(filters);
   }
 }

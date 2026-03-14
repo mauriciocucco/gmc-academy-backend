@@ -121,12 +121,10 @@ export class MaterialsController {
     @Param('id') materialId: string,
     @Param('studentId') studentId: string,
     @Body() body: SetStudentMaterialAccessDto,
-    @CurrentUser() user: JwtPayload,
   ): Promise<void> {
     await this.setStudentMaterialAccessUseCase.execute({
       materialId,
       studentId,
-      enabledById: user.sub,
       dto: body,
     });
   }

@@ -1,4 +1,5 @@
 import {
+  Check,
   Column,
   Entity,
   Index,
@@ -16,10 +17,26 @@ export type ExamAnswerPayload = {
   optionId: string;
 };
 
+export type ExamReviewOptionPayload = {
+  id: string;
+  label: string;
+};
+
+export type ExamReviewQuestionPayload = {
+  questionId: string;
+  questionText: string;
+  position: number;
+  options: ExamReviewOptionPayload[];
+  selectedOptionId: string | null;
+  correctOptionId: string;
+  isCorrect: boolean;
+};
+
 @Entity('exam_attempts')
 @Index('exam_attempts_exam_id_idx', ['examId'])
 @Index('exam_attempts_student_id_idx', ['studentId'])
 @Index('exam_attempts_student_created_at_idx', ['studentId', 'createdAt'])
+@Check('exam_attempts_score_check', `"score" >= 0 AND "score" <= 100`)
 export class ExamAttemptTypeOrmEntity {
   @PrimaryGeneratedColumn({
     type: 'bigint',
@@ -66,6 +83,13 @@ export class ExamAttemptTypeOrmEntity {
     type: 'jsonb',
   })
   answersJson!: ExamAnswerPayload[];
+
+  @Column({
+    name: 'review_json',
+    type: 'jsonb',
+    nullable: true,
+  })
+  reviewJson!: ExamReviewQuestionPayload[] | null;
 
   @Column({
     name: 'created_at',

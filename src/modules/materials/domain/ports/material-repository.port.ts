@@ -8,7 +8,7 @@ export type CreateMaterialPayload = {
   description: string;
   published: boolean;
   categoryKey: string;
-  links: Array<Pick<MaterialLink, 'sourceType' | 'url' | 'position'>>;
+  links: Array<Pick<MaterialLink, 'sourceType' | 'url' | 'label' | 'position'>>;
   createdById: string;
 };
 
@@ -16,10 +16,16 @@ export type UpdateMaterialPayload = Partial<
   Omit<CreateMaterialPayload, 'createdById'>
 >;
 
+export type StudentMaterialAssignment = {
+  materialId: string;
+  position: number;
+};
+
 export interface MaterialRepositoryPort {
   findAll(): Promise<Material[]>;
-  findEnabledForStudent(studentId: string): Promise<Material[]>;
+  findAssignedToStudent(studentId: string): Promise<Material[]>;
   findById(id: string): Promise<Material | null>;
+  findByIds(ids: string[]): Promise<Material[]>;
   create(payload: CreateMaterialPayload): Promise<Material>;
   update(id: string, payload: UpdateMaterialPayload): Promise<Material | null>;
   delete(id: string): Promise<void>;
@@ -28,15 +34,25 @@ export interface MaterialRepositoryPort {
     key: string;
     name: string;
   }): Promise<MaterialCategory>;
+  listStudentAssignments(
+    studentId: string,
+  ): Promise<StudentMaterialAssignment[]>;
+  replaceStudentAssignments(payload: {
+    studentId: string;
+    assignments: StudentMaterialAssignment[];
+  }): Promise<StudentMaterialAssignment[]>;
   setStudentAccess(payload: {
     materialId: string;
     studentId: string;
     enabled: boolean;
-    enabledById: string;
   }): Promise<void>;
+  hasStudentAccessToMaterial(
+    materialId: string,
+    studentId: string,
+  ): Promise<boolean>;
   markAsViewed(materialId: string, studentId: string): Promise<void>;
   unmarkAsViewed(materialId: string, studentId: string): Promise<void>;
-  countEnabledAndViewedForStudent(
+  countAssignedAndViewedForStudent(
     studentId: string,
   ): Promise<{ total: number; viewed: number }>;
 }

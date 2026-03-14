@@ -72,6 +72,7 @@ export class UploadMyProfilePhotoUseCase {
       phone: updatedUser.phone,
       profilePhotoUrl: updatedUser.profilePhotoUrl,
       role: updatedUser.role,
+      mustChangePassword: updatedUser.mustChangePassword,
     };
   }
 

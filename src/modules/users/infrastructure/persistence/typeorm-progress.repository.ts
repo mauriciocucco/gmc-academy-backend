@@ -6,14 +6,15 @@ import {
   StudentProgress,
 } from '../../domain/ports/progress-repository.port';
 import { StudentMaterialAccessTypeOrmEntity } from '../../../../database/typeorm/entities/student-material-access.typeorm-entity';
+import { StudentMaterialAssignmentTypeOrmEntity } from '../../../../database/typeorm/entities/student-material-assignment.typeorm-entity';
 import { ExamAttemptTypeOrmEntity } from '../../../../database/typeorm/entities/exam-attempt.typeorm-entity';
 import { CertificateTypeOrmEntity } from '../../../../database/typeorm/entities/certificate.typeorm-entity';
 
 @Injectable()
 export class TypeOrmProgressRepository implements ProgressRepositoryPort {
   constructor(
-    @InjectRepository(StudentMaterialAccessTypeOrmEntity)
-    private readonly accessRepository: Repository<StudentMaterialAccessTypeOrmEntity>,
+    @InjectRepository(StudentMaterialAssignmentTypeOrmEntity)
+    private readonly assignmentRepository: Repository<StudentMaterialAssignmentTypeOrmEntity>,
     @InjectRepository(ExamAttemptTypeOrmEntity)
     private readonly attemptRepository: Repository<ExamAttemptTypeOrmEntity>,
     @InjectRepository(CertificateTypeOrmEntity)
@@ -22,12 +23,18 @@ export class TypeOrmProgressRepository implements ProgressRepositoryPort {
 
   async getStudentProgress(studentId: string): Promise<StudentProgress> {
     const [materialCounts, examPassed, certificateIssued] = await Promise.all([
-      this.accessRepository
-        .createQueryBuilder('a')
+      this.assignmentRepository
+        .createQueryBuilder('assignment')
         .select('COUNT(*)', 'total')
-        .addSelect('COUNT(a.viewed_at)', 'viewed')
-        .where('a.student_id = :studentId', { studentId })
-        .andWhere('a.enabled = true')
+        .addSelect('COUNT(access.viewed_at)', 'viewed')
+        .innerJoin('assignment.material', 'material')
+        .leftJoin(
+          StudentMaterialAccessTypeOrmEntity,
+          'access',
+          'access.student_id = assignment.student_id AND access.material_id = assignment.material_id',
+        )
+        .where('assignment.student_id = :studentId', { studentId })
+        .andWhere('material.published = true')
         .getRawOne<{ total: string; viewed: string }>(),
 
       this.attemptRepository.existsBy({ studentId, passed: true }),

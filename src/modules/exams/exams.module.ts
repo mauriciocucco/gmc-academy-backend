@@ -4,6 +4,7 @@ import { ExamTypeOrmEntity } from '../../database/typeorm/entities/exam.typeorm-
 import { ExamAttemptTypeOrmEntity } from '../../database/typeorm/entities/exam-attempt.typeorm-entity';
 import { CertificateTypeOrmEntity } from '../../database/typeorm/entities/certificate.typeorm-entity';
 import { ExamsController } from './presentation/http/exams.controller';
+import { AdminExamController } from './presentation/http/admin-exam.controller';
 import { GetActiveExamUseCase } from './application/use-cases/get-active-exam.use-case';
 import { SubmitExamUseCase } from './application/use-cases/submit-exam.use-case';
 import { EXAM_READ_REPOSITORY } from './domain/ports/exam-read-repository.port';
@@ -17,6 +18,8 @@ import { GetExamDetailUseCase } from './application/use-cases/get-exam-detail.us
 import { CreateExamUseCase } from './application/use-cases/create-exam.use-case';
 import { UpdateExamUseCase } from './application/use-cases/update-exam.use-case';
 import { DeleteExamUseCase } from './application/use-cases/delete-exam.use-case';
+import { GetAdminExamConfigUseCase } from './application/use-cases/get-admin-exam-config.use-case';
+import { UpdateAdminExamConfigUseCase } from './application/use-cases/update-admin-exam-config.use-case';
 
 @Module({
   imports: [
@@ -26,13 +29,15 @@ import { DeleteExamUseCase } from './application/use-cases/delete-exam.use-case'
       CertificateTypeOrmEntity,
     ]),
   ],
-  controllers: [ExamsController],
+  controllers: [ExamsController, AdminExamController],
   providers: [
     GetActiveExamUseCase,
+    GetAdminExamConfigUseCase,
     ListExamsUseCase,
     GetExamDetailUseCase,
     CreateExamUseCase,
     UpdateExamUseCase,
+    UpdateAdminExamConfigUseCase,
     DeleteExamUseCase,
     SubmitExamUseCase,
     {

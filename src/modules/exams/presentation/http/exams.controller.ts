@@ -87,8 +87,11 @@ export class ExamsController {
   @Post()
   @UseGuards(RolesGuard)
   @Roles(UserRole.ADMIN)
-  async create(@Body() body: CreateExamDto): Promise<ExamDetailResponseDto> {
-    return this.createExamUseCase.execute(body);
+  async create(
+    @Body() body: CreateExamDto,
+    @CurrentUser() user: JwtPayload,
+  ): Promise<ExamDetailResponseDto> {
+    return this.createExamUseCase.execute(body, user.sub);
   }
 
   @ApiOperation({ summary: 'Update an exam (Admin only)' })
@@ -100,8 +103,9 @@ export class ExamsController {
   async update(
     @Param('id') examId: string,
     @Body() body: UpdateExamDto,
+    @CurrentUser() user: JwtPayload,
   ): Promise<ExamDetailResponseDto> {
-    return this.updateExamUseCase.execute(examId, body);
+    return this.updateExamUseCase.execute(examId, body, user.sub);
   }
 
   @ApiOperation({ summary: 'Delete an exam (Admin only)' })

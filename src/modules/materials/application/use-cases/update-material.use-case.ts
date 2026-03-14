@@ -29,6 +29,7 @@ export class UpdateMaterialUseCase {
       links: dto.links?.map((link, index) => ({
         sourceType: link.sourceType,
         url: link.url.trim(),
+        label: link.label.trim(),
         position: link.position ?? index,
       })),
       published: dto.published,
@@ -57,6 +58,7 @@ export class UpdateMaterialUseCase {
           id: link.id,
           sourceType: link.sourceType,
           url: link.url,
+          label: link.label,
           position: link.position,
         })),
     };

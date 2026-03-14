@@ -1,4 +1,5 @@
 import {
+  Check,
   Column,
   Entity,
   Index,
@@ -10,9 +11,15 @@ import { ExamAttemptTypeOrmEntity } from './exam-attempt.typeorm-entity';
 import { CertificateTypeOrmEntity } from './certificate.typeorm-entity';
 import { UserRole } from '../../../common/domain/enums/user-role.enum';
 import { StudentMaterialAccessTypeOrmEntity } from './student-material-access.typeorm-entity';
+import { StudentMaterialAssignmentTypeOrmEntity } from './student-material-assignment.typeorm-entity';
 
 @Entity('users')
 @Index('users_email_unique_idx', ['email'], { unique: true })
+@Index('users_phone_unique_idx', ['phone'], {
+  unique: true,
+  where: '"phone" IS NOT NULL',
+})
+@Check('users_role_check', `"role" IN ('admin', 'student')`)
 export class UserTypeOrmEntity {
   @PrimaryGeneratedColumn({
     type: 'bigint',
@@ -53,6 +60,13 @@ export class UserTypeOrmEntity {
   refreshTokenHash!: string | null;
 
   @Column({
+    name: 'must_change_password',
+    type: 'boolean',
+    default: false,
+  })
+  mustChangePassword!: boolean;
+
+  @Column({
     name: 'created_at',
     type: 'timestamptz',
     default: () => 'now()',
@@ -82,4 +96,10 @@ export class UserTypeOrmEntity {
     (materialAccess) => materialAccess.enabledBy,
   )
   materialAccessManaged!: StudentMaterialAccessTypeOrmEntity[];
+
+  @OneToMany(
+    () => StudentMaterialAssignmentTypeOrmEntity,
+    (materialAssignment) => materialAssignment.student,
+  )
+  materialAssignments!: StudentMaterialAssignmentTypeOrmEntity[];
 }

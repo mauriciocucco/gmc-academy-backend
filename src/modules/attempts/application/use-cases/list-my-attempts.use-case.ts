@@ -3,15 +3,7 @@ import {
   ATTEMPT_READ_REPOSITORY,
   AttemptReadRepositoryPort,
 } from '../../domain/ports/attempt-read-repository.port';
-
-export type AttemptResponseDto = {
-  id: string;
-  examId: string;
-  examTitle: string;
-  score: number;
-  passed: boolean;
-  createdAt: string;
-};
+import { AttemptResponseDto } from '../dto/attempt-response.dto';
 
 @Injectable()
 export class ListMyAttemptsUseCase {

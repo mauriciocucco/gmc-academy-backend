@@ -23,6 +23,9 @@ class MaterialLinkDto {
   url!: string;
 
   @ApiProperty()
+  label!: string;
+
+  @ApiProperty()
   position!: number;
 }
 

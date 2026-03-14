@@ -19,7 +19,7 @@ export class TypeOrmCertificateReadRepository implements CertificateReadReposito
   ): Promise<LatestCertificate | null> {
     const entity = await this.repository.findOne({
       where: { studentId },
-      relations: ['examAttempt', 'examAttempt.exam'],
+      relations: ['student', 'examAttempt', 'examAttempt.exam'],
       order: { issuedAt: 'DESC' },
     });
 
@@ -28,12 +28,12 @@ export class TypeOrmCertificateReadRepository implements CertificateReadReposito
     }
 
     return {
-      id: entity.id,
-      certificateCode: entity.certificateCode,
+      code: entity.certificateCode,
+      studentName: entity.student.fullName,
+      score: Number(entity.examAttempt.score),
       issuedAt: entity.issuedAt,
       pdfUrl: entity.pdfUrl,
       examTitle: entity.examAttempt.exam.title,
-      attemptScore: Number(entity.examAttempt.score),
     };
   }
 }

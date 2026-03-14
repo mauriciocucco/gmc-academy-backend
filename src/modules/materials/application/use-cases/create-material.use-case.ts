@@ -28,6 +28,7 @@ export class CreateMaterialUseCase {
       links: dto.links.map((link, index) => ({
         sourceType: link.sourceType,
         url: link.url.trim(),
+        label: link.label.trim(),
         position: link.position ?? index,
       })),
       createdById,
@@ -52,6 +53,7 @@ export class CreateMaterialUseCase {
           id: link.id,
           sourceType: link.sourceType,
           url: link.url,
+          label: link.label,
           position: link.position,
         })),
     };

@@ -18,5 +18,7 @@ export interface Exam {
   passScore: number;
   isActive: boolean;
   createdAt: Date;
+  updatedAt: Date;
+  updatedByName: string | null;
   questions: ExamQuestion[];
 }

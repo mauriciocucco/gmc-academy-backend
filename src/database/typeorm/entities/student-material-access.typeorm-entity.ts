@@ -18,6 +18,13 @@ import { UserTypeOrmEntity } from './user.typeorm-entity';
   },
 )
 @Index('student_material_access_student_enabled_idx', ['studentId', 'enabled'])
+@Index(
+  'student_material_access_student_viewed_idx',
+  ['studentId', 'viewedAt'],
+  {
+    where: '"viewed_at" IS NOT NULL',
+  },
+)
 export class StudentMaterialAccessTypeOrmEntity {
   @PrimaryGeneratedColumn({
     type: 'bigint',

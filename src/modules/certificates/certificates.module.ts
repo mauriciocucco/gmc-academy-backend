@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CertificateTypeOrmEntity } from '../../database/typeorm/entities/certificate.typeorm-entity';
 import { StudentMaterialAccessTypeOrmEntity } from '../../database/typeorm/entities/student-material-access.typeorm-entity';
+import { StudentMaterialAssignmentTypeOrmEntity } from '../../database/typeorm/entities/student-material-assignment.typeorm-entity';
 import { ExamAttemptTypeOrmEntity } from '../../database/typeorm/entities/exam-attempt.typeorm-entity';
 import { CertificatesController } from './presentation/http/certificates.controller';
 import { GetLatestCertificateUseCase } from './application/use-cases/get-latest-certificate.use-case';
@@ -22,6 +23,7 @@ import { TypeOrmProgressRepository } from '../users/infrastructure/persistence/t
     TypeOrmModule.forFeature([
       CertificateTypeOrmEntity,
       StudentMaterialAccessTypeOrmEntity,
+      StudentMaterialAssignmentTypeOrmEntity,
       ExamAttemptTypeOrmEntity,
     ]),
   ],

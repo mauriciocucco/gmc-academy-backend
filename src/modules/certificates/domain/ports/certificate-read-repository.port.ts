@@ -3,12 +3,12 @@ export const CERTIFICATE_READ_REPOSITORY = Symbol(
 );
 
 export type LatestCertificate = {
-  id: string;
-  certificateCode: string;
+  code: string;
+  studentName: string;
+  score: number;
   issuedAt: Date;
   pdfUrl: string | null;
-  examTitle: string;
-  attemptScore: number;
+  examTitle?: string;
 };
 
 export interface CertificateReadRepositoryPort {

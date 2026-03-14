@@ -30,6 +30,18 @@ export class TypeOrmExamAttemptRepository implements ExamAttemptRepositoryPort {
           questionId: answer.questionId,
           optionId: answer.optionId,
         })),
+        reviewJson: payload.review.map((question) => ({
+          questionId: question.questionId,
+          questionText: question.questionText,
+          position: question.position,
+          options: question.options.map((option) => ({
+            id: option.id,
+            label: option.label,
+          })),
+          selectedOptionId: question.selectedOptionId,
+          correctOptionId: question.correctOptionId,
+          isCorrect: question.isCorrect,
+        })),
       });
       const savedAttempt = await attemptRepository.save(attempt);
 
@@ -37,6 +49,18 @@ export class TypeOrmExamAttemptRepository implements ExamAttemptRepositoryPort {
         return {
           attemptId: savedAttempt.id,
           certificateCode: null,
+        };
+      }
+
+      const existingCertificate = await certificateRepository.findOne({
+        where: { studentId: payload.studentId },
+        order: { issuedAt: 'DESC' },
+      });
+
+      if (existingCertificate) {
+        return {
+          attemptId: savedAttempt.id,
+          certificateCode: existingCertificate.certificateCode,
         };
       }
 

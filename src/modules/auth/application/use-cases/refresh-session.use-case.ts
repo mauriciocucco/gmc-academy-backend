@@ -64,6 +64,7 @@ export class RefreshSessionUseCase {
         phone: user.phone,
         profilePhotoUrl: user.profilePhotoUrl,
         role: user.role,
+        mustChangePassword: user.mustChangePassword,
       },
     };
   }

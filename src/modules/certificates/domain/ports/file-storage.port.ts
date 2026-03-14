@@ -6,4 +6,6 @@ export interface FileStoragePort {
     fileName: string;
     mimeType: string;
   }): Promise<string>;
+
+  getDownloadUrl(fileUrl: string): string;
 }
