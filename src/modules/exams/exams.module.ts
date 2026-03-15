@@ -20,9 +20,11 @@ import { UpdateExamUseCase } from './application/use-cases/update-exam.use-case'
 import { DeleteExamUseCase } from './application/use-cases/delete-exam.use-case';
 import { GetAdminExamConfigUseCase } from './application/use-cases/get-admin-exam-config.use-case';
 import { UpdateAdminExamConfigUseCase } from './application/use-cases/update-admin-exam-config.use-case';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
+    UsersModule,
     TypeOrmModule.forFeature([
       ExamTypeOrmEntity,
       ExamAttemptTypeOrmEntity,

@@ -59,6 +59,11 @@ import {
   CreateAdminStudentResponseDto,
 } from '../../application/dto/create-admin-student.dto';
 import { CreateAdminStudentUseCase } from '../../application/use-cases/create-admin-student.use-case';
+import {
+  UpdateAdminStudentsAccessDto,
+  UpdateAdminStudentsAccessResponseDto,
+} from '../../application/dto/update-admin-students-access.dto';
+import { UpdateAdminStudentsAccessUseCase } from '../../application/use-cases/update-admin-students-access.use-case';
 
 @ApiTags('Admin')
 @ApiBearerAuth('access-token')
@@ -78,6 +83,7 @@ export class AdminController {
     private readonly updateAdminStudentNoteUseCase: UpdateAdminStudentNoteUseCase,
     private readonly listAdminStudentMaterialsProgressUseCase: ListAdminStudentMaterialsProgressUseCase,
     private readonly createAdminStudentUseCase: CreateAdminStudentUseCase,
+    private readonly updateAdminStudentsAccessUseCase: UpdateAdminStudentsAccessUseCase,
   ) {}
 
   @ApiOperation({ summary: 'Create a new student user (Admin only)' })
@@ -113,7 +119,28 @@ export class AdminController {
       search: query.search,
       status: query.status ?? 'all',
       attemptState: query.attemptState ?? 'all',
+      accessStatus: query.accessStatus ?? 'all',
     });
+  }
+
+  @ApiOperation({
+    summary: 'Block or unblock one or more student accounts (Admin only)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Updated access status for the selected students',
+    type: UpdateAdminStudentsAccessResponseDto,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'One or more students were not found',
+  })
+  @Patch('students/access')
+  async updateStudentsAccess(
+    @CurrentUser() currentUser: JwtPayload,
+    @Body() body: UpdateAdminStudentsAccessDto,
+  ): Promise<UpdateAdminStudentsAccessResponseDto> {
+    return this.updateAdminStudentsAccessUseCase.execute(currentUser.sub, body);
   }
 
   @ApiOperation({

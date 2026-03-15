@@ -27,6 +27,8 @@ describe('ListAdminStudentsUseCase', () => {
           email: 'lucia@example.com',
           lastAttemptScore: 92,
           approved: true,
+          blocked: false,
+          blockedAt: null,
         },
       ],
       meta: {
@@ -43,10 +45,11 @@ describe('ListAdminStudentsUseCase', () => {
     const result = await useCase.execute({
       page: 2,
       pageSize: 5,
-      search: 'lucia',
-      status: 'approved',
-      attemptState: 'with-attempt',
-    });
+        search: 'lucia',
+        status: 'approved',
+        attemptState: 'with-attempt',
+        accessStatus: 'active',
+      });
 
     expect(result).toEqual(expected);
     expect(adminReadRepository.listStudentsWithLatestAttempt).toHaveBeenCalledWith(
@@ -56,6 +59,7 @@ describe('ListAdminStudentsUseCase', () => {
         search: 'lucia',
         status: 'approved',
         attemptState: 'with-attempt',
+        accessStatus: 'active',
       },
     );
   });

@@ -26,6 +26,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: 200, type: AuthSessionDto })
+  @ApiResponse({ status: 403, description: 'User access is blocked' })
   @Post('login')
   @HttpCode(200)
   async login(@Body() body: LoginDto): Promise<AuthSessionDto> {
@@ -34,6 +35,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Refresh access token using refresh token' })
   @ApiResponse({ status: 200, type: AuthSessionDto })
+  @ApiResponse({ status: 403, description: 'User access is blocked' })
   @Post('refresh')
   @HttpCode(200)
   async refresh(@Body() body: RefreshTokenDto): Promise<AuthSessionDto> {

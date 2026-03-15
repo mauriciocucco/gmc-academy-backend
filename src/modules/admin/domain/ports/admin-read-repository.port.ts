@@ -6,6 +6,8 @@ export type AdminStudentListItem = {
   email: string;
   lastAttemptScore: number | null;
   approved: boolean;
+  blocked: boolean;
+  blockedAt: string | null;
 };
 
 export type ListAdminStudentsFilters = {
@@ -14,6 +16,7 @@ export type ListAdminStudentsFilters = {
   search?: string;
   status: 'all' | 'approved' | 'pending';
   attemptState: 'all' | 'with-attempt' | 'without-attempt';
+  accessStatus: 'all' | 'active' | 'blocked';
 };
 
 export type AdminStudentListResult = {

@@ -32,6 +32,7 @@ export class TypeOrmAdminReadRepository implements AdminReadRepositoryPort {
         latest_attempt_id: string | null;
         last_score: string | null;
         approved: boolean | null;
+        blocked_at: Date | string | null;
         total_count: string;
       }>
     >(
@@ -51,7 +52,8 @@ export class TypeOrmAdminReadRepository implements AdminReadRepositoryPort {
           u.email,
           latest.id::text AS latest_attempt_id,
           latest.score::text AS last_score,
-          latest.passed AS approved
+          latest.passed AS approved,
+          u.blocked_at
         FROM users u
         LEFT JOIN LATERAL (
           SELECT ea.id, ea.score, ea.passed
@@ -72,12 +74,24 @@ export class TypeOrmAdminReadRepository implements AdminReadRepositoryPort {
             OR ($3::text = 'with-attempt' AND latest.id IS NOT NULL)
             OR ($3::text = 'without-attempt' AND latest.id IS NULL)
           )
+          AND (
+            $4::text = 'all'
+            OR ($4::text = 'active' AND u.blocked_at IS NULL)
+            OR ($4::text = 'blocked' AND u.blocked_at IS NOT NULL)
+          )
       ) filtered
       ORDER BY filtered.full_name ASC, filtered.id ASC
-      OFFSET $4
-      LIMIT $5;
+      OFFSET $5
+      LIMIT $6;
       `,
-      [search, filters.status, filters.attemptState, offset, filters.pageSize],
+      [
+        search,
+        filters.status,
+        filters.attemptState,
+        filters.accessStatus,
+        offset,
+        filters.pageSize,
+      ],
     );
 
     const items = rows.map(
@@ -87,6 +101,8 @@ export class TypeOrmAdminReadRepository implements AdminReadRepositoryPort {
         email: row.email,
         lastAttemptScore: row.last_score ? Number(row.last_score) : null,
         approved: row.approved ?? false,
+        blocked: row.blocked_at != null,
+        blockedAt: row.blocked_at ? new Date(row.blocked_at).toISOString() : null,
       }),
     );
 

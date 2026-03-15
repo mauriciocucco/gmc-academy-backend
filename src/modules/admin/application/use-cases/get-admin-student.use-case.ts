@@ -55,6 +55,9 @@ export class GetAdminStudentUseCase {
       phone: student.phone,
       profilePhotoUrl: student.profilePhotoUrl,
       approved: lastAttempt?.passed ?? false,
+      blocked: student.blockedAt != null,
+      blockedAt: student.blockedAt?.toISOString() ?? null,
+      blockReason: student.blockReason ?? null,
       lastAttemptScore: lastAttempt?.score ?? null,
       note: note
         ? {

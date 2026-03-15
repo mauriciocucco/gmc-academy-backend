@@ -34,6 +34,7 @@ describe('ListStudentMaterialAssignmentsUseCase', () => {
     };
     userRepository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       findByEmail: jest.fn(),
       create: jest.fn(),
       saveRefreshTokenHash: jest.fn(),
@@ -41,6 +42,7 @@ describe('ListStudentMaterialAssignmentsUseCase', () => {
       updatePassword: jest.fn(),
       updateProfile: jest.fn(),
       updateProfilePhoto: jest.fn(),
+      updateAccessStatus: jest.fn(),
     };
 
     useCase = new ListStudentMaterialAssignmentsUseCase(

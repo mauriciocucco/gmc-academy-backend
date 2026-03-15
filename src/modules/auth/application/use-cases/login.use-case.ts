@@ -1,4 +1,9 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   USER_REPOSITORY,
   UserRepositoryPort,
@@ -13,6 +18,10 @@ import {
 } from '../../domain/ports/token-service.port';
 import { LoginDto } from '../dto/login.dto';
 import { AuthSessionDto } from '../dto/auth-session.dto';
+import {
+  isUserBlocked,
+  USER_ACCESS_BLOCKED_MESSAGE,
+} from '../../../users/domain/user-access';
 
 @Injectable()
 export class LoginUseCase {
@@ -37,6 +46,9 @@ export class LoginUseCase {
     );
     if (!isValidPassword) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+    if (isUserBlocked(user)) {
+      throw new ForbiddenException(USER_ACCESS_BLOCKED_MESSAGE);
     }
 
     const accessTokenPayload = {

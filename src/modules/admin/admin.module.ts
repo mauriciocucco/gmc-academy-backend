@@ -27,6 +27,7 @@ import { ADMIN_STUDENT_INSIGHTS_REPOSITORY } from './domain/ports/admin-student-
 import { TypeOrmAdminStudentInsightsRepository } from './infrastructure/persistence/typeorm-admin-student-insights.repository';
 import { AuthModule } from '../auth/auth.module';
 import { CreateAdminStudentUseCase } from './application/use-cases/create-admin-student.use-case';
+import { UpdateAdminStudentsAccessUseCase } from './application/use-cases/update-admin-students-access.use-case';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { CreateAdminStudentUseCase } from './application/use-cases/create-admin-
     UpdateAdminStudentNoteUseCase,
     ListAdminStudentMaterialsProgressUseCase,
     CreateAdminStudentUseCase,
+    UpdateAdminStudentsAccessUseCase,
     {
       provide: ADMIN_READ_REPOSITORY,
       useClass: TypeOrmAdminReadRepository,

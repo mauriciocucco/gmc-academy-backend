@@ -67,6 +67,15 @@ export class AdminStudentDetailResponseDto {
   @ApiProperty()
   approved!: boolean;
 
+  @ApiProperty()
+  blocked!: boolean;
+
+  @ApiProperty({ nullable: true, format: 'date-time' })
+  blockedAt!: string | null;
+
+  @ApiProperty({ nullable: true })
+  blockReason!: string | null;
+
   @ApiProperty({ nullable: true })
   lastAttemptScore!: number | null;
 

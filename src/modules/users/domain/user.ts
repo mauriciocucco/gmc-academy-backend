@@ -10,5 +10,8 @@ export interface User {
   passwordHash: string;
   refreshTokenHash: string | null;
   mustChangePassword: boolean;
+  blockedAt?: Date | null;
+  blockedByUserId?: string | null;
+  blockReason?: string | null;
   createdAt: Date;
 }

@@ -16,6 +16,7 @@ describe('GetAdminStudentUseCase', () => {
   beforeEach(() => {
     userRepository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       findByEmail: jest.fn(),
       create: jest.fn(),
       saveRefreshTokenHash: jest.fn(),
@@ -23,6 +24,7 @@ describe('GetAdminStudentUseCase', () => {
       updatePassword: jest.fn(),
       updateProfile: jest.fn(),
       updateProfilePhoto: jest.fn(),
+      updateAccessStatus: jest.fn(),
     };
     progressRepository = {
       getStudentProgress: jest.fn(),
@@ -56,6 +58,9 @@ describe('GetAdminStudentUseCase', () => {
       passwordHash: 'hash',
       refreshTokenHash: null,
       mustChangePassword: false,
+      blockedAt: new Date('2026-03-14T18:45:00.000Z'),
+      blockedByUserId: '1',
+      blockReason: 'Pago pendiente',
       createdAt: new Date('2026-03-01T00:00:00.000Z'),
     });
     progressRepository.getStudentProgress.mockResolvedValue({
@@ -97,6 +102,9 @@ describe('GetAdminStudentUseCase', () => {
       phone: '+5491112345678',
       profilePhotoUrl: 'https://cdn.example.com/photo.jpg',
       approved: true,
+      blocked: true,
+      blockedAt: '2026-03-14T18:45:00.000Z',
+      blockReason: 'Pago pendiente',
       lastAttemptScore: 80,
       note: {
         content: 'Necesita refuerzo en prioridad de paso',
@@ -132,6 +140,9 @@ describe('GetAdminStudentUseCase', () => {
       passwordHash: 'hash',
       refreshTokenHash: null,
       mustChangePassword: false,
+      blockedAt: null,
+      blockedByUserId: null,
+      blockReason: null,
       createdAt: new Date(),
     });
     progressRepository.getStudentProgress.mockResolvedValue({
@@ -146,6 +157,9 @@ describe('GetAdminStudentUseCase', () => {
     const result = await useCase.execute('42');
 
     expect(result.approved).toBe(false);
+    expect(result.blocked).toBe(false);
+    expect(result.blockedAt).toBeNull();
+    expect(result.blockReason).toBeNull();
     expect(result.lastAttemptScore).toBeNull();
     expect(result.note).toBeNull();
     expect(result.stats).toEqual({
@@ -170,6 +184,9 @@ describe('GetAdminStudentUseCase', () => {
       passwordHash: 'hash',
       refreshTokenHash: null,
       mustChangePassword: false,
+      blockedAt: null,
+      blockedByUserId: null,
+      blockReason: null,
       createdAt: new Date(),
     });
 

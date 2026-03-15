@@ -14,6 +14,12 @@ export enum AdminStudentAttemptStateFilter {
   WITHOUT_ATTEMPT = 'without-attempt',
 }
 
+export enum AdminStudentAccessStatusFilter {
+  ALL = 'all',
+  ACTIVE = 'active',
+  BLOCKED = 'blocked',
+}
+
 export class ListAdminStudentsQueryDto {
   @ApiPropertyOptional({ minimum: 1, default: 1 })
   @IsOptional()
@@ -58,6 +64,15 @@ export class ListAdminStudentsQueryDto {
   @IsEnum(AdminStudentAttemptStateFilter)
   attemptState?: AdminStudentAttemptStateFilter =
     AdminStudentAttemptStateFilter.ALL;
+
+  @ApiPropertyOptional({
+    enum: AdminStudentAccessStatusFilter,
+    default: AdminStudentAccessStatusFilter.ALL,
+  })
+  @IsOptional()
+  @IsEnum(AdminStudentAccessStatusFilter)
+  accessStatus?: AdminStudentAccessStatusFilter =
+    AdminStudentAccessStatusFilter.ALL;
 }
 
 export class AdminStudentListMetaResponseDto {
@@ -89,6 +104,12 @@ export class AdminStudentListItemResponseDto {
 
   @ApiProperty()
   approved!: boolean;
+
+  @ApiProperty()
+  blocked!: boolean;
+
+  @ApiProperty({ nullable: true, format: 'date-time' })
+  blockedAt!: string | null;
 }
 
 export class ListAdminStudentsResponseDto {

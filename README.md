@@ -80,6 +80,7 @@ Auth y perfil:
 
 - `POST /auth/login`
 - `POST /auth/login` y `POST /auth/refresh` devuelven `user.mustChangePassword` para indicar si el alumno debe actualizar su clave
+- `POST /auth/login`, `POST /auth/refresh` y cualquier ruta con `JwtAuthGuard` devuelven `403` si el usuario fue bloqueado por admin
 - `POST /auth/refresh`
 - `POST /auth/logout`
 - `GET /me`
@@ -134,8 +135,9 @@ Admin:
 - `PATCH /admin/exam` valida `passScore` entre 1 y 100, al menos 2 opciones por pregunta y exactamente 1 correcta por pregunta
 - `POST /admin/students` (admin; body `{ fullName, email, phone? }`; crea siempre rol `student`, normaliza email a lowercase, valida unicidad y devuelve `temporaryPassword` + `mustChangePassword`)
 - `GET /admin/students`
-- `GET /admin/students` acepta `page`, `pageSize`, `search`, `status` (`all|approved|pending`) y `attemptState` (`all|with-attempt|without-attempt`), y devuelve `{ items, meta }`
-- `GET /admin/students/:id` (admin; devuelve contacto, `profilePhotoUrl`, `note`, progreso agregado y estadisticas de intentos del alumno)
+- `GET /admin/students` acepta `page`, `pageSize`, `search`, `status` (`all|approved|pending`), `attemptState` (`all|with-attempt|without-attempt`) y `accessStatus` (`all|active|blocked`), y devuelve `{ items, meta }` con `blocked` y `blockedAt` por alumno
+- `PATCH /admin/students/access` (admin; body `{ studentIds: string[], blocked: boolean, reason?: string }`; bloquea o desbloquea uno o varios alumnos y devuelve `{ items: [{ id, blocked, blockedAt, blockReason }] }`)
+- `GET /admin/students/:id` (admin; devuelve contacto, `profilePhotoUrl`, `blocked`, `blockedAt`, `blockReason`, `note`, progreso agregado y estadisticas de intentos del alumno)
 - `PATCH /admin/students/:id/note` (admin; body `{ content }`, crea o actualiza la nota interna del alumno y devuelve `{ content, updatedAt, updatedByName }`)
 - `GET /admin/students/:id/materials-progress` (admin; devuelve los materiales asignados ordenados por `position` con `viewed`, `viewedAt`, `linksCount` y categoria)
 - `GET /admin/students/:id/attempts` (admin; lista `{ id, examId, examTitle, score, passed, createdAt }` ordenada del mas reciente al mas antiguo)
@@ -162,6 +164,7 @@ Incluye todos los endpoints con schemas de request/response y soporte para auten
 - Los alumnos creados por admin se persisten con rol `student`, contraseña temporal generada por backend y `must_change_password = true`; aparecen automaticamente en `GET /admin/students`
 - Las asignaciones por alumno se guardan en `student_material_assignments`; el historial de visto se conserva en `student_material_access`
 - Las notas internas del admin por alumno se guardan en `student_admin_notes` y `GET /admin/students/:id` devuelve `note` o `null` si todavia no existe
+- El bloqueo de alumnos se persiste en `users.blocked_at`, `users.blocked_by_user_id`, `users.block_reason`; al bloquear se invalida el refresh token y el `JwtAuthGuard` rechaza tambien access tokens ya emitidos
 - La configuracion editable del examen activo vive en `GET/PATCH /admin/exam`; el backend guarda `updated_at` y `updated_by`, y aplica el diff de preguntas/opciones por `id` dentro de una transaccion
 - `GET /me/progress` cuenta solo materiales asignados y publicados al alumno
 - Migraciones:
@@ -175,3 +178,4 @@ Incluye todos los endpoints con schemas de request/response y soporte para auten
   - `src/database/migrations/1773500000000-AddStudentAdminNotes.ts`
   - `src/database/migrations/1773600000000-TrackExamConfigUpdates.ts`
   - `src/database/migrations/1773700000000-AddMustChangePassword.ts`
+  - `src/database/migrations/1773900000000-AddUserAccessBlockFields.ts`

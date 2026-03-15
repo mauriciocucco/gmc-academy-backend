@@ -4,6 +4,7 @@ export const USER_REPOSITORY = Symbol('USER_REPOSITORY');
 
 export interface UserRepositoryPort {
   findById(id: string): Promise<User | null>;
+  findByIds(ids: string[]): Promise<User[]>;
   findByEmail(email: string): Promise<User | null>;
   create(payload: {
     email: string;
@@ -29,4 +30,10 @@ export interface UserRepositoryPort {
     email?: string;
   }): Promise<User>;
   updateProfilePhoto(userId: string, profilePhotoUrl: string): Promise<User>;
+  updateAccessStatus(payload: {
+    userIds: string[];
+    blocked: boolean;
+    blockedByUserId?: string | null;
+    reason?: string | null;
+  }): Promise<void>;
 }

@@ -1,18 +1,30 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
+  Inject,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '../interfaces/jwt-payload.interface';
+import {
+  USER_REPOSITORY,
+  UserRepositoryPort,
+} from '../../../../modules/users/domain/ports/user-repository.port';
+import {
+  isUserBlocked,
+  USER_ACCESS_BLOCKED_MESSAGE,
+} from '../../../../modules/users/domain/user-access';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    @Inject(USER_REPOSITORY)
+    private readonly userRepository: UserRepositoryPort,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -30,9 +42,22 @@ export class JwtAuthGuard implements CanActivate {
       const payload = await this.jwtService.verifyAsync<JwtPayload>(token, {
         secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
       });
+      const user = await this.userRepository.findById(payload.sub);
+      if (!user) {
+        throw new UnauthorizedException('Invalid access token');
+      }
+      if (isUserBlocked(user)) {
+        throw new ForbiddenException(USER_ACCESS_BLOCKED_MESSAGE);
+      }
       request.user = payload;
       return true;
-    } catch {
+    } catch (error) {
+      if (
+        error instanceof UnauthorizedException ||
+        error instanceof ForbiddenException
+      ) {
+        throw error;
+      }
       throw new UnauthorizedException('Invalid access token');
     }
   }

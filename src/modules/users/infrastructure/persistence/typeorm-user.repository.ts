@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { UserRepositoryPort } from '../../domain/ports/user-repository.port';
 import { User } from '../../domain/user';
 import { UserTypeOrmEntity } from '../../../../database/typeorm/entities/user.typeorm-entity';
@@ -15,6 +15,18 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
   async findById(id: string): Promise<User | null> {
     const entity = await this.repository.findOne({ where: { id } });
     return entity ? this.toDomain(entity) : null;
+  }
+
+  async findByIds(ids: string[]): Promise<User[]> {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const entities = await this.repository.find({
+      where: { id: In(ids) },
+    });
+
+    return entities.map((entity) => this.toDomain(entity));
   }
 
   async findByEmail(email: string): Promise<User | null> {
@@ -106,6 +118,39 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
     return this.toDomain(updated as UserTypeOrmEntity);
   }
 
+  async updateAccessStatus(payload: {
+    userIds: string[];
+    blocked: boolean;
+    blockedByUserId?: string | null;
+    reason?: string | null;
+  }): Promise<void> {
+    if (payload.userIds.length === 0) {
+      return;
+    }
+
+    if (payload.blocked) {
+      await this.repository.update(
+        { id: In(payload.userIds) },
+        {
+          blockedAt: new Date(),
+          blockedByUserId: payload.blockedByUserId ?? null,
+          blockReason: payload.reason ?? null,
+          refreshTokenHash: null,
+        },
+      );
+      return;
+    }
+
+    await this.repository.update(
+      { id: In(payload.userIds) },
+      {
+        blockedAt: null,
+        blockedByUserId: null,
+        blockReason: null,
+      },
+    );
+  }
+
   private toDomain(entity: UserTypeOrmEntity): User {
     return {
       id: entity.id,
@@ -117,6 +162,9 @@ export class TypeOrmUserRepository implements UserRepositoryPort {
       passwordHash: entity.passwordHash,
       refreshTokenHash: entity.refreshTokenHash,
       mustChangePassword: entity.mustChangePassword,
+      blockedAt: entity.blockedAt,
+      blockedByUserId: entity.blockedByUserId,
+      blockReason: entity.blockReason,
       createdAt: entity.createdAt,
     };
   }

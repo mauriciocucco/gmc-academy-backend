@@ -16,6 +16,7 @@ describe('ChangeMyPasswordUseCase', () => {
   beforeEach(() => {
     userRepository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       findByEmail: jest.fn(),
       create: jest.fn(),
       saveRefreshTokenHash: jest.fn(),
@@ -23,6 +24,7 @@ describe('ChangeMyPasswordUseCase', () => {
       updatePassword: jest.fn(),
       updateProfile: jest.fn(),
       updateProfilePhoto: jest.fn(),
+      updateAccessStatus: jest.fn(),
     };
     passwordHasher = {
       hash: jest.fn(),

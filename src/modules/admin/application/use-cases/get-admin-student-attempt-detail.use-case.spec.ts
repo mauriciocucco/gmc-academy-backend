@@ -12,6 +12,7 @@ describe('GetAdminStudentAttemptDetailUseCase', () => {
   beforeEach(() => {
     userRepository = {
       findById: jest.fn(),
+      findByIds: jest.fn(),
       findByEmail: jest.fn(),
       create: jest.fn(),
       saveRefreshTokenHash: jest.fn(),
@@ -19,6 +20,7 @@ describe('GetAdminStudentAttemptDetailUseCase', () => {
       updatePassword: jest.fn(),
       updateProfile: jest.fn(),
       updateProfilePhoto: jest.fn(),
+      updateAccessStatus: jest.fn(),
     };
     attemptReadRepository = {
       findByStudentId: jest.fn(),

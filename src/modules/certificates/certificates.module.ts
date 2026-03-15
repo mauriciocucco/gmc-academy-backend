@@ -17,9 +17,11 @@ import { FILE_STORAGE } from './domain/ports/file-storage.port';
 import { CloudinaryFileStorageAdapter } from './infrastructure/storage/cloudinary-file-storage.adapter';
 import { PROGRESS_REPOSITORY } from '../users/domain/ports/progress-repository.port';
 import { TypeOrmProgressRepository } from '../users/infrastructure/persistence/typeorm-progress.repository';
+import { UsersModule } from '../users/users.module';
 
 @Module({
   imports: [
+    UsersModule,
     TypeOrmModule.forFeature([
       CertificateTypeOrmEntity,
       StudentMaterialAccessTypeOrmEntity,

@@ -1,4 +1,9 @@
-import { Inject, Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import {
   TOKEN_SERVICE,
   TokenServicePort,
@@ -13,6 +18,10 @@ import {
 } from '../../domain/ports/password-hasher.port';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
 import { AuthSessionDto } from '../dto/auth-session.dto';
+import {
+  isUserBlocked,
+  USER_ACCESS_BLOCKED_MESSAGE,
+} from '../../../users/domain/user-access';
 
 @Injectable()
 export class RefreshSessionUseCase {
@@ -32,6 +41,10 @@ export class RefreshSessionUseCase {
     const user = await this.userRepository.findById(payload.sub);
     if (!user || !user.refreshTokenHash) {
       throw new UnauthorizedException('Invalid refresh session');
+    }
+    if (isUserBlocked(user)) {
+      await this.userRepository.clearRefreshTokenHash(user.id);
+      throw new ForbiddenException(USER_ACCESS_BLOCKED_MESSAGE);
     }
 
     const isValid = await this.passwordHasher.compare(

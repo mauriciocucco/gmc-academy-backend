@@ -20,6 +20,7 @@ import { StudentMaterialAssignmentTypeOrmEntity } from './student-material-assig
   unique: true,
   where: '"phone" IS NOT NULL',
 })
+@Index('users_blocked_at_idx', ['blockedAt'])
 @Check('users_role_check', `"role" IN ('admin', 'student')`)
 export class UserTypeOrmEntity {
   @PrimaryGeneratedColumn({
@@ -66,6 +67,27 @@ export class UserTypeOrmEntity {
     default: false,
   })
   mustChangePassword!: boolean;
+
+  @Column({
+    name: 'blocked_at',
+    type: 'timestamptz',
+    nullable: true,
+  })
+  blockedAt!: Date | null;
+
+  @Column({
+    name: 'blocked_by_user_id',
+    type: 'bigint',
+    nullable: true,
+  })
+  blockedByUserId!: string | null;
+
+  @Column({
+    name: 'block_reason',
+    type: 'text',
+    nullable: true,
+  })
+  blockReason!: string | null;
 
   @Column({
     name: 'created_at',

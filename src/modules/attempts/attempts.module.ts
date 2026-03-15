@@ -6,9 +6,10 @@ import { ListMyAttemptsUseCase } from './application/use-cases/list-my-attempts.
 import { ATTEMPT_READ_REPOSITORY } from './domain/ports/attempt-read-repository.port';
 import { TypeOrmAttemptReadRepository } from './infrastructure/persistence/typeorm-attempt-read.repository';
 import { GetMyAttemptDetailUseCase } from './application/use-cases/get-my-attempt-detail.use-case';
+import { UsersModule } from '../users/users.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ExamAttemptTypeOrmEntity])],
+  imports: [UsersModule, TypeOrmModule.forFeature([ExamAttemptTypeOrmEntity])],
   controllers: [AttemptsController],
   providers: [
     ListMyAttemptsUseCase,
