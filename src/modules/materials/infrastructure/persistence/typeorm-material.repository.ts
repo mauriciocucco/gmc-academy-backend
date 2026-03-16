@@ -4,9 +4,11 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, In, Repository } from 'typeorm';
+import { Brackets, DataSource, In, Repository } from 'typeorm';
 import {
   CreateMaterialPayload,
+  ListAdminMaterialsFilters,
+  ListAdminMaterialsResult,
   MaterialRepositoryPort,
   UpdateMaterialCategoryPayload,
   UpdateMaterialPayload,
@@ -77,6 +79,111 @@ export class TypeOrmMaterialRepository implements MaterialRepositoryPort {
       const viewedAt: string | null = raw?.student_access_viewed_at ?? null;
       return this.toDomain(entity, viewedAt !== null);
     });
+  }
+
+  async listForAdmin(
+    filters: ListAdminMaterialsFilters,
+  ): Promise<ListAdminMaterialsResult> {
+    const offset = (filters.page - 1) * filters.pageSize;
+    const search =
+      filters.search && filters.search.trim().length > 0
+        ? `%${filters.search.trim().toLowerCase()}%`
+        : null;
+
+    const baseQuery = this.materialRepository
+      .createQueryBuilder('material')
+      .leftJoin('material.category', 'category');
+
+    if (search) {
+      baseQuery.andWhere(
+        new Brackets((qb) => {
+          qb.where('LOWER(material.title) LIKE :search', { search })
+            .orWhere('LOWER(material.description) LIKE :search', { search })
+            .orWhere('LOWER(category.name) LIKE :search', { search })
+            .orWhere('LOWER(category.key) LIKE :search', { search })
+            .orWhere(
+              `
+                EXISTS (
+                  SELECT 1
+                  FROM material_links link_filter
+                  WHERE link_filter.material_id = material.id
+                    AND (
+                      LOWER(link_filter.label) LIKE :search
+                      OR LOWER(link_filter.url) LIKE :search
+                    )
+                )
+              `,
+              { search },
+            );
+        }),
+      );
+    }
+
+    if (filters.categoryId) {
+      baseQuery.andWhere('material.categoryId = :categoryId', {
+        categoryId: filters.categoryId,
+      });
+    }
+
+    if (filters.publishedStatus === 'published') {
+      baseQuery.andWhere('material.published = true');
+    }
+
+    if (filters.publishedStatus === 'draft') {
+      baseQuery.andWhere('material.published = false');
+    }
+
+    const totalItems = await baseQuery.clone().getCount();
+    const rows = await baseQuery
+      .clone()
+      .select('material.id', 'id')
+      .orderBy('material.createdAt', 'DESC')
+      .addOrderBy('material.id', 'DESC')
+      .offset(offset)
+      .limit(filters.pageSize)
+      .getRawMany<{ id: string }>();
+
+    if (rows.length === 0) {
+      return {
+        items: [],
+        meta: {
+          page: filters.page,
+          pageSize: filters.pageSize,
+          totalItems,
+          totalPages:
+            totalItems === 0 ? 0 : Math.ceil(totalItems / filters.pageSize),
+        },
+      };
+    }
+
+    const ids = rows.map((row) => row.id);
+    const entities = await this.materialRepository.find({
+      where: { id: In(ids) },
+      relations: ['category', 'links'],
+      order: {
+        createdAt: 'DESC',
+        links: {
+          position: 'ASC',
+        },
+      },
+    });
+
+    const entitiesById = new Map(
+      entities.map((entity) => [entity.id, this.toDomain(entity, null)]),
+    );
+
+    return {
+      items: ids
+        .map((id) => entitiesById.get(id))
+        .filter((material): material is Material => material !== undefined),
+      meta: {
+        page: filters.page,
+        pageSize: filters.pageSize,
+        totalItems,
+        totalPages:
+          totalItems === 0 ? 0 : Math.ceil(totalItems / filters.pageSize),
+      },
+    };
   }
 
   async findById(id: string): Promise<Material | null> {

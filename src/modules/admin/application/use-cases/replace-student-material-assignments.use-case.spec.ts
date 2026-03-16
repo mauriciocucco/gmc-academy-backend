@@ -13,6 +13,7 @@ describe('ReplaceStudentMaterialAssignmentsUseCase', () => {
     materialRepository = {
       findAll: jest.fn(),
       findAssignedToStudent: jest.fn(),
+      listForAdmin: jest.fn(),
       findById: jest.fn(),
       findByIds: jest.fn(),
       create: jest.fn(),

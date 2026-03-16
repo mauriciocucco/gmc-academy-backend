@@ -1,10 +1,10 @@
-# AGENTS.md — GMC Academy Backend
+# AGENTS.md - GMC Academy Backend
 
 Instrucciones para agentes de IA (OpenAI Codex, etc.) que trabajen en este repositorio.
 
-## Descripción del proyecto
+## Descripcion del proyecto
 
-Backend NestJS para la plataforma e-learning de Autoescuela GMC. Expone una API REST versionada (`/api/v1`) para autenticación, materiales de estudio, exámenes, intentos y certificados.
+Backend NestJS para la plataforma e-learning de Autoescuela GMC. Expone una API REST versionada (`/api/v1`) para autenticacion, materiales de estudio, examenes, intentos y certificados.
 
 ## Stack
 
@@ -12,18 +12,18 @@ Backend NestJS para la plataforma e-learning de Autoescuela GMC. Expone una API 
 - **ORM:** TypeORM con PostgreSQL
 - **Auth:** JWT (access + refresh tokens)
 - **Storage:** Cloudinary (PDFs de certificados)
-- **Generación PDF:** pdfkit
+- **Generacion PDF:** pdfkit
 - **Package manager:** pnpm
 
 ## Arquitectura
 
-Hexagonal por módulo. Cada módulo en `src/modules/<nombre>/` sigue esta estructura:
+Hexagonal por modulo. Cada modulo en `src/modules/<nombre>/` sigue esta estructura:
 
-```
+```text
 <modulo>/
   application/
     dto/          # DTOs de entrada/salida con class-validator y @ApiProperty
-    use-cases/    # Un use-case por archivo, lógica de negocio
+    use-cases/    # Un use-case por archivo, logica de negocio
   domain/
     ports/        # Interfaces de repositorios (abstracciones)
     *.ts          # Entidades de dominio si aplica
@@ -35,13 +35,13 @@ Hexagonal por módulo. Cada módulo en `src/modules/<nombre>/` sigue esta estruc
   <nombre>.module.ts
 ```
 
-La capa de dominio no debe importar nada de NestJS ni TypeORM (solo salvo `@Injectable`, `@Inject`).
+La capa de dominio no debe importar nada de NestJS ni TypeORM (salvo `@Injectable`, `@Inject`).
 
-## Módulos
+## Modulos
 
-| Módulo       | Ruta base              | Roles           |
+| Modulo       | Ruta base              | Roles           |
 | ------------ | ---------------------- | --------------- |
-| auth         | `/api/v1/auth`         | público         |
+| auth         | `/api/v1/auth`         | publico         |
 | users        | `/api/v1/me`           | autenticado     |
 | materials    | `/api/v1/materials`    | admin / student |
 | exams        | `/api/v1/exams`        | admin / student |
@@ -49,40 +49,27 @@ La capa de dominio no debe importar nada de NestJS ni TypeORM (solo salvo `@Inje
 | certificates | `/api/v1/certificates` | student         |
 | admin        | `/api/v1/admin`        | admin           |
 
-## Convenciones de código
+## Convenciones de codigo
 
-- **DTOs:** usar `class-validator` para validación y `@ApiProperty` / `@ApiPropertyOptional` de `@nestjs/swagger` en todos los campos.
-- **Use-cases:** clase con un solo método `execute(...)`. Inyectar dependencias por símbolo (`@Inject(TOKEN)`).
-- **Repositorios:** definir interfaz en `domain/ports/` con un símbolo exportado (`export const TOKEN = Symbol('TOKEN')`). Implementar en `infrastructure/persistence/`.
-- **Guards:** `JwtAuthGuard` para autenticación, `RolesGuard` + `@Roles(UserRole.X)` para autorización.
+- **DTOs:** usar `class-validator` para validacion y `@ApiProperty` / `@ApiPropertyOptional` de `@nestjs/swagger` en todos los campos.
+- **Use-cases:** clase con un solo metodo `execute(...)`. Inyectar dependencias por simbolo (`@Inject(TOKEN)`).
+- **Repositorios:** definir interfaz en `domain/ports/` con un simbolo exportado (`export const TOKEN = Symbol('TOKEN')`). Implementar en `infrastructure/persistence/`.
+- **Guards:** `JwtAuthGuard` para autenticacion, `RolesGuard` + `@Roles(UserRole.X)` para autorizacion.
 - **Enums:** `UserRole` (`admin` | `student`), `MaterialLinkSource` (`drive` | `youtube` | `other`).
-- **Respuestas:** no lanzar excepciones de dominio genéricas; usar `NotFoundException`, `BadRequestException`, etc. de `@nestjs/common`.
+- **Respuestas:** no lanzar excepciones de dominio genericas; usar `NotFoundException`, `BadRequestException`, etc. de `@nestjs/common`.
 - **Nombres de archivo:** `*.use-case.ts`, `*.controller.ts`, `*.module.ts`, `*.dto.ts`, `*.typeorm-entity.ts`, `*.port.ts`.
 - **Tests:** AAA (Arrange-Act-Assert), un archivo `*.spec.ts` por use-case.
 
 ## Comandos importantes
 
 ```bash
-# Instalar dependencias
 pnpm install
-
-# Desarrollo con watch
 pnpm start:dev
-
-# Build
 pnpm build
-
-# Migraciones
 pnpm migration:run
 pnpm migration:revert
-
-# Seed inicial
 pnpm seed
-
-# Atajo: migrar + seed
 pnpm db:setup
-
-# Tests
 pnpm test
 pnpm test:cov
 pnpm test:e2e
@@ -90,9 +77,9 @@ pnpm test:e2e
 
 ## Variables de entorno
 
-Ver `.env.example`. Clave mínima para correr localmente:
+Ver `.env.example`. Clave minima para correr localmente:
 
-```
+```text
 DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME
 JWT_ACCESS_SECRET, JWT_REFRESH_SECRET
 JWT_ACCESS_EXPIRES_IN, JWT_REFRESH_EXPIRES_IN
@@ -101,19 +88,18 @@ CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
 CERTIFICATE_PDF_URL_TTL_SECONDS (opcional; default 900)
 ```
 
-## Documentación API
+## Documentacion API
 
-Swagger UI en `http://localhost:3000/api/docs` (requiere que el servidor esté corriendo).
+Swagger UI en `http://localhost:3000/api/docs` (requiere que el servidor este corriendo).
 
 ## Seguimiento de progreso del estudiante
 
-El sistema rastrea el avance del estudiante a través de tres señales:
+El sistema rastrea el avance del estudiante a traves de tres senales:
 
-1. **Asignaciones + materiales vistos** — `student_material_assignments` guarda `student_id`, `material_id`, `position`, `created_at`, `updated_at`; define que ve cada alumno y en que orden. `GET /api/v1/admin/students/:id/material-assignments` devuelve `[{ materialId, position }]`; `PATCH /api/v1/admin/students/:id/material-assignments` reemplaza la asignacion total del alumno. `GET /api/v1/materials` devuelve biblioteca completa para admin, y para student solo materiales asignados y `published`, ordenados por `position ASC`. `PATCH /api/v1/materials/:id/view` (student, body `{ viewed: boolean }`) registra `viewed_at` en `student_material_access` solo si el material esta asignado y publicado; `viewed: true` conserva la primera apertura con `COALESCE`, `viewed: false` la resetea. Si se bloquea un material, no se borra el historial de visto. Para resetear el visto de un alumno: `DELETE /api/v1/materials/:id/view/:studentId` (admin).
-2. **Examen aprobado** — columna `passed` en `exam_attempts`.
-3. **Certificado emitido** — existencia de registro unico en `certificates` para el estudiante (relacion 1:1 con `users`, constraint `UNIQUE` en `student_id`).
-
-4. **Vista admin del alumno** â€” `POST /api/v1/admin/students` crea usuarios siempre con rol `student`, email normalizado a lowercase, password temporal generado por backend y `mustChangePassword = true`, y el nuevo alumno queda visible en `GET /api/v1/admin/students`; `GET /api/v1/admin/students` soporta paginacion real (`page`, `pageSize`) y filtros `search`, `status`, `attemptState`, `accessStatus`, devolviendo `{ items, meta }`; `PATCH /api/v1/admin/students/access` bloquea o desbloquea uno o varios alumnos y al bloquear limpia el `refresh_token_hash`; `GET /api/v1/admin/students/:id` agrega contacto, `profilePhotoUrl`, estado de bloqueo, `note`, progreso y metricas de intentos; `PATCH /api/v1/admin/students/:id/note` crea o actualiza la nota interna del alumno en `student_admin_notes`; `GET /api/v1/admin/students/:id/materials-progress` lista los materiales asignados en orden con `viewed`, `viewedAt`, `linksCount` y categoria; `GET /api/v1/admin/students/:id/attempts` lista intentos; `GET /api/v1/admin/students/:id/attempts/:attemptId` expone el snapshot historico de revision para admin, igual que el alumno.
+1. **Asignaciones + materiales vistos** - `student_material_assignments` guarda `student_id`, `material_id`, `position`, `created_at`, `updated_at`; define que ve cada alumno y en que orden. `GET /api/v1/admin/students/:id/material-assignments` devuelve `[{ materialId, position }]`; `PATCH /api/v1/admin/students/:id/material-assignments` reemplaza la asignacion total del alumno. `GET /api/v1/materials` mantiene la biblioteca completa para admin, y para student solo materiales asignados y `published`, ordenados por `position ASC`. `GET /api/v1/admin/materials` agrega paginacion real (`page`, `pageSize`) y filtros `search`, `categoryId`, `publishedStatus`, devolviendo `{ items, meta }`. `PATCH /api/v1/materials/:id/view` (student, body `{ viewed: boolean }`) registra `viewed_at` en `student_material_access` solo si el material esta asignado y publicado; `viewed: true` conserva la primera apertura con `COALESCE`, `viewed: false` la resetea. Si se bloquea un material, no se borra el historial de visto. Para resetear el visto de un alumno: `DELETE /api/v1/materials/:id/view/:studentId` (admin).
+2. **Examen aprobado** - columna `passed` en `exam_attempts`.
+3. **Certificado emitido** - existencia de registro unico en `certificates` para el estudiante (relacion 1:1 con `users`, constraint `UNIQUE` en `student_id`).
+4. **Vista admin del alumno** - `POST /api/v1/admin/students` crea usuarios siempre con rol `student`, email normalizado a lowercase, password temporal generado por backend y `mustChangePassword = true`, y el nuevo alumno queda visible en `GET /api/v1/admin/students`; `GET /api/v1/admin/students` soporta paginacion real (`page`, `pageSize`) y filtros `search`, `status`, `attemptState`, `accessStatus`, devolviendo `{ items, meta }`; `PATCH /api/v1/admin/students/access` bloquea o desbloquea uno o varios alumnos y al bloquear limpia el `refresh_token_hash`; `GET /api/v1/admin/students/:id` agrega contacto, `profilePhotoUrl`, estado de bloqueo, `note`, progreso y metricas de intentos; `PATCH /api/v1/admin/students/:id/note` crea o actualiza la nota interna del alumno en `student_admin_notes`; `GET /api/v1/admin/students/:id/materials-progress` lista los materiales asignados en orden con `viewed`, `viewedAt`, `linksCount` y categoria; `GET /api/v1/admin/students/:id/attempts` lista intentos; `GET /api/v1/admin/students/:id/attempts/:attemptId` expone el snapshot historico de revision para admin, igual que el alumno.
 
 `GET /api/v1/me/progress` (student) devuelve:
 
@@ -128,22 +114,22 @@ El sistema rastrea el avance del estudiante a través de tres señales:
 
 `materialsTotal` y `materialsViewed` cuentan solo materiales asignados y `published` del alumno. `POST /api/v1/certificates/me/latest/generate-pdf` lanza `403 ForbiddenException` si `materialsViewed < materialsTotal` o `examPassed === false`.
 
-**Puerto:** `ProgressRepositoryPort` en `src/modules/users/domain/ports/progress-repository.port.ts`. Implementación: `TypeOrmProgressRepository`. Usado tanto en `UsersModule` como en `CertificatesModule` (instancia independiente por módulo).
+**Puerto:** `ProgressRepositoryPort` en `src/modules/users/domain/ports/progress-repository.port.ts`. Implementacion: `TypeOrmProgressRepository`. Usado tanto en `UsersModule` como en `CertificatesModule` (instancia independiente por modulo).
 
-## Mantenimiento de documentación
+## Mantenimiento de documentacion
 
-Ante cualquier cambio en el código, actualizar la documentación afectada **en el mismo commit**:
+Ante cualquier cambio en el codigo, actualizar la documentacion afectada **en el mismo commit**:
 
-- **AGENTS.md** — si cambia arquitectura, convenciones, endpoints relevantes o comportamiento de negocio.
-- **README.md** — si cambia la lista de endpoints, comandos, variables de entorno o instrucciones de arranque.
-- **Swagger** — siempre: añadir/actualizar `@ApiProperty`, `@ApiOperation` y `@ApiResponse` en DTOs y controllers afectados.
+- **AGENTS.md** - si cambia arquitectura, convenciones, endpoints relevantes o comportamiento de negocio.
+- **README.md** - si cambia la lista de endpoints, comandos, variables de entorno o instrucciones de arranque.
+- **Swagger** - siempre: anadir/actualizar `@ApiProperty`, `@ApiOperation` y `@ApiResponse` en DTOs y controllers afectados.
 
-Este archivo (`AGENTS.md`) tiene un **límite de 200 líneas**. Si una sección crece, resumirla o extraerla a `docs/`.
+Este archivo (`AGENTS.md`) tiene un **limite de 200 lineas**. Si una seccion crece, resumirla o extraerla a `docs/`.
 
 ## Lo que NO se debe hacer
 
-- No importar entidades TypeORM (`*.typeorm-entity.ts`) desde capas de dominio o aplicación.
-- No poner lógica de negocio en controllers; solo delegar al use-case correspondiente.
+- No importar entidades TypeORM (`*.typeorm-entity.ts`) desde capas de dominio o aplicacion.
+- No poner logica de negocio en controllers; solo delegar al use-case correspondiente.
 - No omitir `@ApiProperty` en DTOs nuevos.
 - No crear migraciones manualmente; generarlas con TypeORM CLI si corresponde.
 - No usar `any` salvo casos justificados.
@@ -152,6 +138,7 @@ Este archivo (`AGENTS.md`) tiene un **límite de 200 líneas**. Si una sección 
 ## Contratos visibles
 
 - `GET /api/v1/materials` devuelve `links[]` con `id`, `sourceType`, `url`, `label`, `position`. `POST/PATCH /api/v1/materials` requieren `label` persistido por link. Para student, la lista sale ordenada por la asignacion `position` del alumno.
+- `GET /api/v1/admin/materials` devuelve `{ items, meta }`; acepta `page`, `pageSize`, `search`, `categoryId`, `publishedStatus` (`all|published|draft`). `search` matchea `title`, `description`, categoria y datos de links. `items[]` mantiene el mismo shape de material que `GET /api/v1/materials`.
 - `GET /api/v1/materials/categories` devuelve `[{ id, key, name }]`; `GET /api/v1/materials/categories/:id` devuelve una sola categoria. `POST /api/v1/materials/categories` recibe `{ key, name }` con `key` unica en lowercase; `PATCH /api/v1/materials/categories/:id` permite actualizar `{ key?, name? }`; `DELETE /api/v1/materials/categories/:id` devuelve `204` y rechaza con `400 BadRequestException` si la categoria tiene materiales asociados.
 - `POST /api/v1/admin/students` recibe `{ fullName, email, phone? }`, crea siempre rol `student`, valida email unico, normaliza email a lowercase y responde `{ id, fullName, email, phone, temporaryPassword, mustChangePassword }`; `temporaryPassword` solo se expone en la creacion.
 - `GET /api/v1/admin/students` devuelve `{ items, meta }`; `search` matchea `fullName`/`email`, `status` usa `approved` del ultimo intento, `attemptState` usa existencia real de intento y `accessStatus` filtra por `blocked_at IS NULL|NOT NULL`. Cada item incluye `blocked` y `blockedAt`.
@@ -163,6 +150,7 @@ Este archivo (`AGENTS.md`) tiene un **límite de 200 líneas**. Si una sección 
 - `PATCH /api/v1/admin/students/:id/note` recibe `{ content: string }` y devuelve la nota persistida con `updatedAt` y `updatedByName`.
 - `GET /api/v1/admin/students/:id/materials-progress` devuelve `[{ materialId, title, description, category, position, viewed, viewedAt, linksCount }]` para los materiales asignados del alumno, ordenados por `position`.
 - `GET /api/v1/admin/exam` devuelve el examen activo editable con `id`, `title`, `description`, `passScore`, `updatedAt`, `updatedByName` y `questions[{ id, text, position, options[{ id, label, isCorrect }] }]`; `PATCH /api/v1/admin/exam` recibe el mismo shape sin `updated*`, trata `id` presente como update, crea lo que no tiene `id`, elimina lo omitido dentro de una transaccion y valida `passScore` entre 1 y 100, minimo 2 opciones y exactamente 1 correcta por pregunta.
+- `GET /api/v1/admin/exam/questions` devuelve `{ examId, title, description, passScore, updatedAt, updatedByName, items, meta }`; acepta `page`, `pageSize`, `search`. `search` matchea `question_text` y labels de opciones. `items[]` usa `{ id, text, position, options[{ id, label, isCorrect }] }`.
 - `GET /api/v1/certificates/me/latest` devuelve `code`, `studentName`, `score`, `issuedAt`, `pdfUrl` y puede incluir `examTitle`. Si existe PDF, `pdfUrl` es una URL firmada temporal generada por backend.
 - `POST /api/v1/certificates/me/latest/generate-pdf` genera un certificado PDF institucional GMC en A4 apaisado, con codigo de validacion, calificacion y datos del examen.
 - Si un alumno ya posee certificado y vuelve a aprobar un reintento, el backend reutiliza el certificado existente y no crea uno nuevo.

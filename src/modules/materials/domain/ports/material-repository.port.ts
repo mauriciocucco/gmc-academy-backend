@@ -26,9 +26,30 @@ export type StudentMaterialAssignment = {
   position: number;
 };
 
+export type ListAdminMaterialsFilters = {
+  page: number;
+  pageSize: number;
+  search?: string;
+  categoryId?: string;
+  publishedStatus: 'all' | 'published' | 'draft';
+};
+
+export type ListAdminMaterialsResult = {
+  items: Material[];
+  meta: {
+    page: number;
+    pageSize: number;
+    totalItems: number;
+    totalPages: number;
+  };
+};
+
 export interface MaterialRepositoryPort {
   findAll(): Promise<Material[]>;
   findAssignedToStudent(studentId: string): Promise<Material[]>;
+  listForAdmin(
+    filters: ListAdminMaterialsFilters,
+  ): Promise<ListAdminMaterialsResult>;
   findById(id: string): Promise<Material | null>;
   findByIds(ids: string[]): Promise<Material[]>;
   create(payload: CreateMaterialPayload): Promise<Material>;

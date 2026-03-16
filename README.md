@@ -91,7 +91,8 @@ Auth y perfil:
 Materials:
 
 - `GET /materials`
-- `GET /materials` devuelve toda la biblioteca para admin; para student devuelve solo materiales asignados y publicados, ordenados por `position` ascendente de la asignacion
+- `GET /materials` mantiene el contrato actual: para admin devuelve toda la biblioteca; para student devuelve solo materiales asignados y publicados, ordenados por `position` ascendente de la asignacion
+- `GET /admin/materials` (admin; acepta `page`, `pageSize`, `search`, `categoryId`, `publishedStatus` (`all|published|draft`) y devuelve `{ items, meta }`; `search` matchea titulo, descripcion, categoria, label de link y URL del link)
 - `GET /materials/categories`
 - `GET /materials/categories/:id`
 - `GET /materials` devuelve `links[]` con `id`, `sourceType`, `url`, `label`, `position`
@@ -131,6 +132,7 @@ Certificates:
 Admin:
 
 - `GET /admin/exam` (admin; devuelve `id`, `title`, `description`, `passScore`, `updatedAt`, `updatedByName` y `questions[]` con `options[]` incluyendo `isCorrect`)
+- `GET /admin/exam/questions` (admin; acepta `page`, `pageSize`, `search` y devuelve `{ examId, title, description, passScore, updatedAt, updatedByName, items, meta }`; `search` matchea texto de pregunta y labels de opciones)
 - `PATCH /admin/exam` (admin; body `{ title, description, passScore, questions }`, donde cada pregunta usa `id?`, `text`, `position` y `options[{ id?, label, isCorrect }]`; omisiones eliminan preguntas/opciones)
 - `PATCH /admin/exam` valida `passScore` entre 1 y 100, al menos 2 opciones por pregunta y exactamente 1 correcta por pregunta
 - `POST /admin/students` (admin; body `{ fullName, email, phone? }`; crea siempre rol `student`, normaliza email a lowercase, valida unicidad y devuelve `temporaryPassword` + `mustChangePassword`)
@@ -166,6 +168,7 @@ Incluye todos los endpoints con schemas de request/response y soporte para auten
 - Las notas internas del admin por alumno se guardan en `student_admin_notes` y `GET /admin/students/:id` devuelve `note` o `null` si todavia no existe
 - El bloqueo de alumnos se persiste en `users.blocked_at`, `users.blocked_by_user_id`, `users.block_reason`; al bloquear se invalida el refresh token y el `JwtAuthGuard` rechaza tambien access tokens ya emitidos
 - La configuracion editable del examen activo vive en `GET/PATCH /admin/exam`; el backend guarda `updated_at` y `updated_by`, y aplica el diff de preguntas/opciones por `id` dentro de una transaccion
+- Los listados paginados de administracion viven en `GET /admin/materials` y `GET /admin/exam/questions`; no requieren migraciones porque solo agregan consultas y contratos HTTP
 - `GET /me/progress` cuenta solo materiales asignados y publicados al alumno
 - Migraciones:
   - `src/database/migrations/1768650000000-InitSchema.ts`

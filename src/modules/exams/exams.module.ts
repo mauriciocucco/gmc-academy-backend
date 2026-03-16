@@ -19,6 +19,7 @@ import { CreateExamUseCase } from './application/use-cases/create-exam.use-case'
 import { UpdateExamUseCase } from './application/use-cases/update-exam.use-case';
 import { DeleteExamUseCase } from './application/use-cases/delete-exam.use-case';
 import { GetAdminExamConfigUseCase } from './application/use-cases/get-admin-exam-config.use-case';
+import { ListAdminExamQuestionsUseCase } from './application/use-cases/list-admin-exam-questions.use-case';
 import { UpdateAdminExamConfigUseCase } from './application/use-cases/update-admin-exam-config.use-case';
 import { UsersModule } from '../users/users.module';
 
@@ -35,6 +36,7 @@ import { UsersModule } from '../users/users.module';
   providers: [
     GetActiveExamUseCase,
     GetAdminExamConfigUseCase,
+    ListAdminExamQuestionsUseCase,
     ListExamsUseCase,
     GetExamDetailUseCase,
     CreateExamUseCase,

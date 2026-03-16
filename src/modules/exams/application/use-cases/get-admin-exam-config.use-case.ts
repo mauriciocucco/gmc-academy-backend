@@ -4,6 +4,7 @@ import {
   ExamReadRepositoryPort,
 } from '../../domain/ports/exam-read-repository.port';
 import { AdminExamConfigResponseDto } from '../dto/admin-exam-config.dto';
+import { toAdminExamQuestionResponseDto } from './admin-exam-question.mapper';
 
 @Injectable()
 export class GetAdminExamConfigUseCase {
@@ -27,16 +28,7 @@ export class GetAdminExamConfigUseCase {
       updatedByName: exam.updatedByName ?? 'Sistema',
       questions: exam.questions
         .sort((a, b) => a.position - b.position)
-        .map((question) => ({
-          id: question.id,
-          text: question.questionText,
-          position: question.position,
-          options: question.options.map((option) => ({
-            id: option.id,
-            label: option.label,
-            isCorrect: option.id === question.correctOption,
-          })),
-        })),
+        .map(toAdminExamQuestionResponseDto),
     };
   }
 }

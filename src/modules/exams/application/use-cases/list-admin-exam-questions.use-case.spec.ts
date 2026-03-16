@@ -1,10 +1,10 @@
 import { NotFoundException } from '@nestjs/common';
-import { GetAdminExamConfigUseCase } from './get-admin-exam-config.use-case';
+import { ListAdminExamQuestionsUseCase } from './list-admin-exam-questions.use-case';
 import { ExamReadRepositoryPort } from '../../domain/ports/exam-read-repository.port';
 
-describe('GetAdminExamConfigUseCase', () => {
+describe('ListAdminExamQuestionsUseCase', () => {
   let examReadRepository: jest.Mocked<ExamReadRepositoryPort>;
-  let useCase: GetAdminExamConfigUseCase;
+  let useCase: ListAdminExamQuestionsUseCase;
 
   beforeEach(() => {
     examReadRepository = {
@@ -14,23 +14,21 @@ describe('GetAdminExamConfigUseCase', () => {
       findById: jest.fn(),
     };
 
-    useCase = new GetAdminExamConfigUseCase(examReadRepository);
+    useCase = new ListAdminExamQuestionsUseCase(examReadRepository);
   });
 
-  it('returns the active exam config with isCorrect flags', async () => {
-    examReadRepository.findActive.mockResolvedValue({
-      id: '9',
+  it('returns a paginated list of active exam questions', async () => {
+    examReadRepository.listActiveQuestions.mockResolvedValue({
+      examId: '9',
       title: 'Final',
       description: 'Config actual',
       passScore: 70,
-      isActive: true,
-      createdAt: new Date('2026-03-14T18:00:00.000Z'),
-      updatedAt: new Date('2026-03-14T19:00:00.000Z'),
+      updatedAt: new Date('2026-03-15T11:00:00.000Z'),
       updatedByName: 'Admin GMC',
-      questions: [
+      items: [
         {
-          id: '11',
-          questionText: 'Pregunta 1',
+          id: '12',
+          questionText: 'Pregunta 2',
           correctOption: 'b',
           position: 2,
           options: [
@@ -39,8 +37,8 @@ describe('GetAdminExamConfigUseCase', () => {
           ],
         },
         {
-          id: '10',
-          questionText: 'Pregunta 0',
+          id: '11',
+          questionText: 'Pregunta 1',
           correctOption: 'c',
           position: 1,
           options: [
@@ -49,21 +47,36 @@ describe('GetAdminExamConfigUseCase', () => {
           ],
         },
       ],
+      meta: {
+        page: 1,
+        pageSize: 2,
+        totalItems: 5,
+        totalPages: 3,
+      },
     });
 
-    const result = await useCase.execute();
+    const result = await useCase.execute({
+      page: 1,
+      pageSize: 2,
+      search: 'pregunta',
+    });
 
+    expect(examReadRepository.listActiveQuestions).toHaveBeenCalledWith({
+      page: 1,
+      pageSize: 2,
+      search: 'pregunta',
+    });
     expect(result).toEqual({
-      id: '9',
+      examId: '9',
       title: 'Final',
       description: 'Config actual',
       passScore: 70,
-      updatedAt: '2026-03-14T19:00:00.000Z',
+      updatedAt: '2026-03-15T11:00:00.000Z',
       updatedByName: 'Admin GMC',
-      questions: [
+      items: [
         {
-          id: '10',
-          text: 'Pregunta 0',
+          id: '11',
+          text: 'Pregunta 1',
           position: 1,
           options: [
             { id: 'c', label: 'Opcion C', isCorrect: true },
@@ -71,8 +84,8 @@ describe('GetAdminExamConfigUseCase', () => {
           ],
         },
         {
-          id: '11',
-          text: 'Pregunta 1',
+          id: '12',
+          text: 'Pregunta 2',
           position: 2,
           options: [
             { id: 'a', label: 'Opcion A', isCorrect: false },
@@ -80,12 +93,23 @@ describe('GetAdminExamConfigUseCase', () => {
           ],
         },
       ],
+      meta: {
+        page: 1,
+        pageSize: 2,
+        totalItems: 5,
+        totalPages: 3,
+      },
     });
   });
 
   it('throws when there is no active exam', async () => {
-    examReadRepository.findActive.mockResolvedValue(null);
+    examReadRepository.listActiveQuestions.mockResolvedValue(null);
 
-    await expect(useCase.execute()).rejects.toBeInstanceOf(NotFoundException);
+    await expect(
+      useCase.execute({
+        page: 1,
+        pageSize: 10,
+      }),
+    ).rejects.toBeInstanceOf(NotFoundException);
   });
 });

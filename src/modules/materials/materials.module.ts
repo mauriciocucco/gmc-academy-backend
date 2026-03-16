@@ -6,9 +6,11 @@ import { MaterialLinkTypeOrmEntity } from '../../database/typeorm/entities/mater
 import { StudentMaterialAccessTypeOrmEntity } from '../../database/typeorm/entities/student-material-access.typeorm-entity';
 import { StudentMaterialAssignmentTypeOrmEntity } from '../../database/typeorm/entities/student-material-assignment.typeorm-entity';
 import { MaterialsController } from './presentation/http/materials.controller';
+import { AdminMaterialsController } from './presentation/http/admin-materials.controller';
 import { MATERIAL_REPOSITORY } from './domain/ports/material-repository.port';
 import { TypeOrmMaterialRepository } from './infrastructure/persistence/typeorm-material.repository';
 import { ListMaterialsUseCase } from './application/use-cases/list-materials.use-case';
+import { ListAdminMaterialsUseCase } from './application/use-cases/list-admin-materials.use-case';
 import { CreateMaterialUseCase } from './application/use-cases/create-material.use-case';
 import { UpdateMaterialUseCase } from './application/use-cases/update-material.use-case';
 import { DeleteMaterialUseCase } from './application/use-cases/delete-material.use-case';
@@ -32,9 +34,10 @@ import { UsersModule } from '../users/users.module';
       StudentMaterialAssignmentTypeOrmEntity,
     ]),
   ],
-  controllers: [MaterialsController],
+  controllers: [MaterialsController, AdminMaterialsController],
   providers: [
     ListMaterialsUseCase,
+    ListAdminMaterialsUseCase,
     ListMaterialCategoriesUseCase,
     CreateMaterialUseCase,
     CreateMaterialCategoryUseCase,
